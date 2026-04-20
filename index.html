@@ -135,13 +135,13 @@
     <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs"><i class="fa-solid fa-gear text-slate-400 mr-2"></i> Customize Tiles</h3>
+                <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs"><i class="fa-solid fa-gear text-slate-400 mr-2"></i> <span data-i18n="customize">Tegels Aanpassen</span></h3>
                 <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-700 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-5 overflow-y-auto flex-1 custom-scrollbar">
                 <div class="flex gap-2 mb-4">
                     <div class="flex-1 relative">
-                        <input type="text" id="new-tile-input" autocomplete="off" onkeypress="if(event.key === 'Enter') addTile()" placeholder="Add substance or ATC..." class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
+                        <input type="text" id="new-tile-input" autocomplete="off" onkeypress="if(event.key === 'Enter') addTile()" data-i18n="add_ph" placeholder="Voeg stof of ATC toe..." class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
                         <div id="tile-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-50"></div>
                     </div>
                     <button onclick="addTile()" class="benu-bg-blue text-white px-5 rounded-xl hover:bg-blue-900 transition-colors text-sm font-bold shadow-md"><i class="fa-solid fa-plus"></i></button>
@@ -149,7 +149,7 @@
                 <div id="settings-tile-list" class="space-y-2"></div>
             </div>
             <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button onclick="closeSettings()" class="bg-white border border-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-colors">Close</button>
+                <button onclick="closeSettings()" data-i18n="close" class="bg-white border border-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-colors">Sluiten</button>
             </div>
         </div>
     </div>
@@ -346,20 +346,20 @@
         }
 
         const metadata = {
-            'tablet': { i: '<i class="fa-solid fa-tablets"></i>', l: 'Tablet/Pill' },
-            'capsule': { i: '<i class="fa-solid fa-capsules text-emerald-500"></i>', l: 'Capsule' },
-            'injectie': { i: '<i class="fa-solid fa-syringe text-sky-500"></i>', l: 'Injection' },
-            'spray': { i: '<i class="fa-solid fa-spray-can text-sky-400"></i>', l: 'Spray' },
-            'oog': { i: '<i class="fa-solid fa-eye text-cyan-500"></i>', l: 'Eye' },
-            'oor': { i: '<i class="fa-solid fa-ear-listen text-orange-400"></i>', l: 'Ear' },
-            'vloeibaar': { i: '<i class="fa-solid fa-bottle-droplet text-blue-400"></i>', l: 'Liquid/Oral' },
-            'cutaan': { i: '<i class="fa-solid fa-hand-holding-droplet text-amber-500"></i>', l: 'Skin/Cutaneous' },
-            'inhalatie': { i: '<i class="fa-solid fa-lungs text-teal-500"></i>', l: 'Inhalation' },
-            'neus': { i: '<i class="fa-solid fa-bottle-droplet text-indigo-400"></i>', l: 'Nasal' },
-            'vaginaal': { i: '<i class="fa-solid fa-venus text-pink-500"></i>', l: 'Vaginal' },
-            'rectaal': { i: '<i class="fa-solid fa-pills text-purple-400"></i>', l: 'Suppository/Rectal' },
-            'poeder': { i: '<i class="fa-solid fa-mortar-pestle text-amber-700"></i>', l: 'Powder' },
-            'onbekend': { i: '<i class="fa-solid fa-pills text-slate-400"></i>', l: 'Other' }
+            'tablet': { i: '<i class="fa-solid fa-tablets"></i>', label: { nl: "Tablet", en: "Tablet/Pill", sw: "Kidonge" } },
+            'capsule': { i: '<i class="fa-solid fa-capsules text-emerald-500"></i>', label: { nl: "Capsule", en: "Capsule", sw: "Kapsuli" } },
+            'injectie': { i: '<i class="fa-solid fa-syringe text-sky-500"></i>', label: { nl: "Injectie", en: "Injection", sw: "Sindano" } },
+            'spray': { i: '<i class="fa-solid fa-spray-can text-sky-400"></i>', label: { nl: "Spray", en: "Spray", sw: "Kupuliza" } },
+            'oog': { i: '<i class="fa-solid fa-eye text-cyan-500"></i>', label: { nl: "Oog", en: "Eye", sw: "Jicho" } },
+            'oor': { i: '<i class="fa-solid fa-ear-listen text-orange-400"></i>', label: { nl: "Oor", en: "Ear", sw: "Sikio" } },
+            'vloeibaar': { i: '<i class="fa-solid fa-bottle-droplet text-blue-400"></i>', label: { nl: "Vloeibaar", en: "Liquid/Oral", sw: "Kioevu" } },
+            'cutaan': { i: '<i class="fa-solid fa-hand-holding-droplet text-amber-500"></i>', label: { nl: "Cutaan", en: "Skin/Cutaneous", sw: "Ngozi" } },
+            'inhalatie': { i: '<i class="fa-solid fa-lungs text-teal-500"></i>', label: { nl: "Inhalatie", en: "Inhalation", sw: "Kuvuta pumzi" } },
+            'neus': { i: '<i class="fa-solid fa-bottle-droplet text-indigo-400"></i>', label: { nl: "Neus", en: "Nasal", sw: "Pua" } },
+            'vaginaal': { i: '<i class="fa-solid fa-venus text-pink-500"></i>', label: { nl: "Vaginaal", en: "Vaginal", sw: "Ukeni" } },
+            'rectaal': { i: '<i class="fa-solid fa-pills text-purple-400"></i>', label: { nl: "Rectaal", en: "Suppository/Rectal", sw: "Njia ya chini" } },
+            'poeder': { i: '<i class="fa-solid fa-mortar-pestle text-amber-700"></i>', label: { nl: "Poeder", en: "Powder", sw: "Poda" } },
+            'onbekend': { i: '<i class="fa-solid fa-pills text-slate-400"></i>', label: { nl: "Overig", en: "Other", sw: "Mengine" } }
         };
 
         function getCats(text) {
@@ -407,7 +407,7 @@
         }
 
         async function loadDataFromURL(url) {
-            document.getElementById('status-text').textContent = "Loading...";
+            document.getElementById('status-text').textContent = uiDict['status_load'][currentLang];
             document.getElementById('status-icon').className = "fa-solid fa-circle-notch animate-spin text-slate-400";
 
             try {
@@ -423,10 +423,10 @@
                 let cachedResponse = isCacheValid ? await cache.match(url) : null;
 
                 if (cachedResponse) {
-                    document.getElementById('status-text').textContent = "Loading from cache...";
+                    document.getElementById('status-text').textContent = uiDict['status_cache'][currentLang];
                     csvText = await cachedResponse.text();
                 } else {
-                    document.getElementById('status-text').textContent = "Connecting...";
+                    document.getElementById('status-text').textContent = uiDict['status_connect'][currentLang];
                     
                     const response = await fetch(url);
                     if (!response.ok) throw new Error("Netwerk response was niet ok");
@@ -467,7 +467,7 @@
                     csvText = new TextDecoder("utf-8").decode(chunksAll);
                 }
 
-                document.getElementById('status-text').textContent = "Parsing CSV...";
+                document.getElementById('status-text').textContent = uiDict['status_parse'][currentLang];
 
                 Papa.parse(csvText, {
                     header: true, delimiter: "|", skipEmptyLines: true,
@@ -479,7 +479,7 @@
                             if(item.ATC && item.ATC.includes('-')) terms.add(item.ATC.split('-')[1].toUpperCase().trim());
                         });
                         uniekeSubstanties = Array.from(terms);
-                        document.getElementById('status-text').textContent = database.length + " PRODUCTS LOADED";
+                        document.getElementById('status-text').textContent = database.length + " " + uiDict['status_loaded'][currentLang];
                         document.getElementById('status-icon').className = "fa-solid fa-check-circle text-emerald-500 animate-none";
                     },
                     error: (err) => {
@@ -489,7 +489,7 @@
 
             } catch (err) {
                 console.error("Fetch of Parse Fout:", err);
-                document.getElementById('status-text').textContent = "Choose CSV File";
+                document.getElementById('status-text').textContent = uiDict['status_choose'][currentLang];
                 document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
                 attemptUrl = false; // Volgende klik opent direct de verkenner
                 document.getElementById('csvFileInput').click(); // Automatische fallback naar lokaal bestand
@@ -500,7 +500,7 @@
             const file = e.target.files[0];
             if (!file) return;
             
-            document.getElementById('status-text').textContent = "Loading...";
+            document.getElementById('status-text').textContent = uiDict['status_load'][currentLang];
             document.getElementById('status-icon').className = "fa-solid fa-circle-notch animate-spin text-slate-400";
 
             Papa.parse(file, {
@@ -513,11 +513,11 @@
                         if(item.ATC && item.ATC.includes('-')) terms.add(item.ATC.split('-')[1].toUpperCase().trim());
                     });
                     uniekeSubstanties = Array.from(terms);
-                    document.getElementById('status-text').textContent = database.length + " PRODUCTS LOADED";
+                    document.getElementById('status-text').textContent = database.length + " " + uiDict['status_loaded'][currentLang];
                     document.getElementById('status-icon').className = "fa-solid fa-check-circle text-emerald-500 animate-none";
                 },
                 error: () => {
-                    document.getElementById('status-text').textContent = "LOADING FAILED";
+                    document.getElementById('status-text').textContent = uiDict['status_fail'][currentLang];
                     document.getElementById('status-icon').className = "fa-solid fa-triangle-exclamation text-red-500 animate-pulse";
                 }
             });
@@ -577,12 +577,12 @@
                     <div class="px-5 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchIndex(${database.indexOf(m)})">
                         <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${t(m.PRODUCTNAAM)}</div><div class="text-[10px] text-slate-400 font-mono">RVG ${m.REGISTRATIENUMMER}</div></div>
                         <div class="text-slate-300 group-hover:text-blue-200 text-xs">${getCats(m.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
-                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No products</div>';
+                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">' + uiDict['no_products'][currentLang] + '</div>';
 
                 document.getElementById('suggest-substances').innerHTML = substanceMatches.map(s => `
                     <div class="px-5 py-3 hover:bg-[#ecf4d1] cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchStof('${s}')">
                         <div class="font-bold text-slate-700 text-sm truncate group-hover:text-[#6f8b34]">${t(s)}</div>
-                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No substances</div>';
+                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">' + uiDict['no_substances'][currentLang] + '</div>';
 
                 suggestionsPanel.classList.remove('hidden');
             } else {
@@ -674,9 +674,9 @@
             subsetVorm.forEach(a => sterktes.add(getSterkte(a.PRODUCTNAAM)));
 
             document.getElementById('filter-vorm').innerHTML = Array.from(vormen).map(v => {
-                const meta = metadata[v] || { i: '', l: v };
+                const meta = metadata[v] || { i: '', label: { nl: v, en: v, sw: v } };
                 return `<button onclick="currentVorm='${v}';renderAlts()" class="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase border transition-all ${currentVorm===v ? 'bg-[#84ad41] text-white border-[#84ad41] shadow-md':'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}">
-                    ${v !== 'alle' ? meta.i : ''} ${v === 'alle' ? 'All Forms' : meta.l}
+                    ${v !== 'alle' ? meta.i : ''} ${v === 'alle' ? uiDict['all_forms'][currentLang] : meta.label[currentLang]}
                 </button>`;
             }).join('');
 
@@ -742,21 +742,21 @@
                 return { ...a, originalIndex: database.indexOf(a), diffCount: extra.length + mist.length, extra, mist };
             }).sort((a, b) => a.diffCount - b.diffCount);
 
-            document.getElementById('alt-counter').textContent = sortedFinal.length === 1 ? '1 alternative' : sortedFinal.length + ' alternatives';
+            document.getElementById('alt-counter').textContent = sortedFinal.length === 1 ? uiDict['alt_single'][currentLang] : sortedFinal.length + ' ' + uiDict['alt_plural'][currentLang];
 
             if (sortedFinal.length === 0) {
-                list.innerHTML = `<div class="text-center p-8 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm font-medium">No alternatives found matching all filters. Try disabling a filter.</div>`;
+                list.innerHTML = `<div class="text-center p-8 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm font-medium">${uiDict['no_alts'][currentLang]}</div>`;
                 return;
             }
 
             list.innerHTML = sortedFinal.map(a => {
                 let diffHTML = '';
                 if (a.extra.length > 0) {
-                    diffHTML += `<div class="flex flex-wrap gap-1 mt-2 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Extra:</span>` + 
+                    diffHTML += `<div class="flex flex-wrap gap-1 mt-2 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">${uiDict['extra'][currentLang]}</span>` + 
                         a.extra.map(e => `<span class="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[9px] ${kritischeStoffen.some(k => heeftAllergeen(e, k)) ? 'ring-1 ring-red-400 font-bold' : ''}">+ ${t(formatHulpstof(e))}</span>`).join('') + `</div>`;
                 }
                 if (a.mist.length > 0) {
-                    diffHTML += `<div class="flex flex-wrap gap-1 mt-1 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Less:</span>` + 
+                    diffHTML += `<div class="flex flex-wrap gap-1 mt-1 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">${uiDict['less'][currentLang]}</span>` + 
                         a.mist.map(m => `<span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-400 text-[9px] line-through">- ${t(formatHulpstof(m))}</span>`).join('') + `</div>`;
                 }
 
@@ -773,7 +773,7 @@
                         <span class="text-xs font-mono text-slate-300 group-hover:text-slate-500 shrink-0 ml-4">RVG ${a.REGISTRATIENUMMER}</span>
                     </div>
                     <div class="border-t border-slate-50 mt-3 pt-2">
-                        ${a.diffCount === 0 ? '<span class="text-[9px] text-[#6f8b34] font-black uppercase flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> Identical excipients</span>' : diffHTML}
+                        ${a.diffCount === 0 ? '<span class="text-[9px] text-[#6f8b34] font-black uppercase flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> ' + uiDict['identical'][currentLang] + '</span>' : diffHTML}
                     </div>
                 </div>`;
             }).join('');
@@ -822,17 +822,17 @@
             const substanceMatches = uniekeSubstanties.filter(s => isFlexibleMatch(query, s)).slice(0, 3);
 
             if (productMatches.length === 0 && substanceMatches.length === 0) {
-                showSearchFeedback(`<div class="text-red-500 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> No results found for "${val}". Check the spelling.</div>`);
+                showSearchFeedback(`<div class="text-red-500 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> ${uiDict['no_results'][currentLang]} "${val}". ${uiDict['check_spelling'][currentLang]}</div>`);
                 return;
             }
 
             let buttons = [];
-            substanceMatches.forEach(s => buttons.push(`<button onclick="doSearchStof('${s.replace(/'/g, "\\'")}'); hideSearchFeedback();" class="text-[11px] bg-white text-blue-700 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-capsules text-blue-400"></i> Substance: ${t(s)}</button>`));
-            productMatches.forEach(p => buttons.push(`<button onclick="doSearchIndex(${database.indexOf(p)}); hideSearchFeedback();" class="text-[11px] bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-pills text-emerald-400"></i> Product: ${t(p.PRODUCTNAAM)}</button>`));
+            substanceMatches.forEach(s => buttons.push(`<button onclick="doSearchStof('${s.replace(/'/g, "\\'")}'); hideSearchFeedback();" class="text-[11px] bg-white text-blue-700 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-capsules text-blue-400"></i> ${uiDict['substance_lbl'][currentLang]} ${t(s)}</button>`));
+            productMatches.forEach(p => buttons.push(`<button onclick="doSearchIndex(${database.indexOf(p)}); hideSearchFeedback();" class="text-[11px] bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-pills text-emerald-400"></i> ${uiDict['product_lbl'][currentLang]} ${t(p.PRODUCTNAAM)}</button>`));
 
             showSearchFeedback(`
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <span class="text-slate-600 font-bold flex items-center gap-2 shrink-0 text-sm"><i class="fa-solid fa-circle-question text-blue-500 text-lg"></i> Did you mean:</span>
+                    <span class="text-slate-600 font-bold flex items-center gap-2 shrink-0 text-sm"><i class="fa-solid fa-circle-question text-blue-500 text-lg"></i> ${uiDict['did_you_mean'][currentLang]}</span>
                     <div class="flex flex-wrap gap-2">${buttons.slice(0, 4).join('')}</div>
                 </div>
             `);
@@ -938,12 +938,13 @@
         }
 
         window.onload = () => { 
+            setLanguage('nl'); // Standaard instellen op Nederlands om hardcoded tekst te vertalen via js
             renderPopularTiles(); 
             
             if (CSV_WEB_URL) {
                 loadDataFromURL(CSV_WEB_URL);
             } else {
-                document.getElementById('status-text').textContent = "Choose CSV File";
+                document.getElementById('status-text').textContent = uiDict['status_choose'][currentLang];
                 document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
             }
         };
