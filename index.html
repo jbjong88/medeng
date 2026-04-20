@@ -1124,6 +1124,33 @@
             renderSettingsList();
         }
 
+    window.exportMissingTerms = function() {
+        if(database.length === 0) return alert("Wacht tot de database is geladen!");
+        const missing = new Set();
+        
+        database.forEach(item => {
+            if(item.FARMACEUTISCHEVORM && item.FARMACEUTISCHEVORM !== "-") missing.add(item.FARMACEUTISCHEVORM.toUpperCase().trim());
+            if(item.WERKZAMESTOFFEN && item.WERKZAMESTOFFEN !== "-") {
+                item.WERKZAMESTOFFEN.split('#').forEach(s => missing.add(s.trim().toUpperCase()));
+            }
+            if(item.HULPSTOFFEN && item.HULPSTOFFEN !== "-") {
+                item.HULPSTOFFEN.split('#').forEach(s => {
+                    let h = s.trim().toUpperCase().replace(/\s{2,}/g, ' ');
+                    h = h.replace(/(VITAMINE\s+)?\bE\s*-?\s*(\d{3,4}[a-zA-Z]?)\b/gi, (match, vit, p2) => vit ? match : 'E ' + p2);
+                    missing.add(h);
+                });
+            }
+        });
+
+        const actuallyMissing = Array.from(missing).filter(word => !dictMed[word] && !/\bE\s\d{3,4}[a-zA-Z]?\b/i.test(word) && word !== "");
+        
+        const blob = new Blob([actuallyMissing.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'onvertaald.txt';
+        a.click();
+    };
+
         window.onload = () => { 
             setLanguage('nl'); // Standaard instellen op Nederlands om hardcoded tekst te vertalen via js
             renderPopularTiles(); 
