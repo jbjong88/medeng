@@ -163,61 +163,251 @@
     <input type="file" id="csvFileInput" accept=".csv" class="hidden">
 
     <script>
-        // --- TRANSLATION LAYER ---
-        const nlToEn = {
-            // Vormen
-            "TABLET": "TABLET", "ZETPIL": "SUPPOSITORY", "CAPSULE": "CAPSULE", "DRAGEE": "COATED TABLET",
-            "KAUWTABLET": "CHEWABLE TABLET", "BRUISTABLET": "EFFERVESCENT TABLET", "SMELTTABLET": "ORODISPERSIBLE TABLET",
-            "ZUIGTABLET": "LOZENGE", "SUBLINGUAAL": "SUBLINGUAL", "OROMUCOSAAL": "OROMUCOSAL",
-            "INJECTIEVLOEISTOF": "SOLUTION FOR INJECTION", "INFUSIEVLOEISTOF": "SOLUTION FOR INFUSION",
-            "OPLOSSING": "SOLUTION", "SUSPENSIE": "SUSPENSION", "EMULSIE": "EMULSION",
-            "ZALF": "OINTMENT", "CREME": "CREAM", "CRÈME": "CREAM", "GEL": "GEL", "PASTA": "PASTE",
-            "OOGDRUPPELS": "EYE DROPS", "OORDRUPPELS": "EAR DROPS", "NEUSDRUPPELS": "NASAL DROPS", "NEUSSPRAY": "NASAL SPRAY",
-            "INHALATIEPOEDER": "INHALATION POWDER", "VERNEVELVLOEISTOF": "NEBULISER SOLUTION", "INHALATIEGAS": "INHALATION GAS",
-            "POEDER": "POWDER", "GRANULAAT": "GRANULES", "DRANK": "ORAL SOLUTION", "STROOP": "SYRUP",
-            "KLYSMA": "ENEMA", "PLEISTER": "TRANSDERMAL PATCH", "SHAMPOO": "SHAMPOO", "LOTION": "LOTION",
+        // --- GLOBAL TRANSLATION LAYER ---
+        let currentLang = 'nl'; // nl = Nederlands, en = English, sw = Swahili
+
+        const uiDict = {
+            "title": { nl: "Snelle Referentie", en: "Quick Reference", sw: "Rejea ya Haraka" },
+            "search_ph": { nl: "Zoek op merknaam, RVG, of stof...", en: "Search by brand name, RVG, or substance...", sw: "Tafuta kwa jina la chapa, RVG, au dutu..." },
+            "search_btn": { nl: "ZOEKEN", en: "SEARCH", sw: "TAFUTA" },
+            "products": { nl: "Producten", en: "Products", sw: "Bidhaa" },
+            "substances": { nl: "Stoffen / ATC", en: "Substances / ATC", sw: "Dutu / ATC" },
+            "active_sub": { nl: "Actieve stoffen", en: "Active substances", sw: "Dutu amilifu" },
+            "back_overview": { nl: "Terug naar overzicht", en: "Back to overview", sw: "Rudi kwenye muhtasari" },
+            "dosage_form": { nl: "Toedieningsvorm", en: "Dosage form", sw: "Fomu ya dawa" },
+            "atc_group": { nl: "ATC Groep", en: "ATC Group", sw: "Kikundi cha ATC" },
+            "excipients_main": { nl: "Hulpstoffen Hoofdproduct", en: "Excipients Main Product", sw: "Viambato Saidizi (Bidhaa Kuu)" },
+            "filters": { nl: "Filters", en: "Filters", sw: "Vichujio" },
+            "reset_all": { nl: "Alles Resetten", en: "Reset All", sw: "Weka upya yote" },
+            "form": { nl: "Vorm:", en: "Form:", sw: "Fomu:" },
+            "strength": { nl: "Sterkte:", en: "Strength:", sw: "Kipimo:" },
+            "free_of": { nl: "Vrij van:", en: "Free of:", sw: "Bila:" },
+            "customize": { nl: "Tegels Aanpassen", en: "Customize Tiles", sw: "Badilisha Vigae" },
+            "close": { nl: "Sluiten", en: "Close", sw: "Funga" },
+            "add_ph": { nl: "Voeg stof of ATC toe...", en: "Add substance or ATC...", sw: "Ongeza dutu au ATC..." },
+            "smpc": { nl: "SmPC", en: "SmPC", sw: "SmPC" },
+            "leaflet": { nl: "Bijsluiter", en: "Package Leaflet", sw: "Kipeperushi" },
+            "gib": { nl: "GIB Dossier", en: "GIB Dossier", sw: "Faili la GIB" },
             
-            "OMHULD": "COATED", "FILMOMHULD": "FILM-COATED", "MAAGSAPRESISTENT": "GASTRO-RESISTANT",
-            "MGA": "MODIFIED-RELEASE", "MVA": "MODIFIED-RELEASE", "RETARD": "PROLONGED-RELEASE",
-            "GEREGULEERDE AFGIFTE": "MODIFIED-RELEASE", "VERLENGDE AFGIFTE": "PROLONGED-RELEASE", "VERTRAAGDE AFGIFTE": "DELAYED-RELEASE",
-            "VOOR": "FOR", "INJECTIE": "INJECTION", "INFUSIE": "INFUSION", "CONCENTRAAT": "CONCENTRATE", "OPLOSSINGMIDDEL": "SOLVENT", "MENGSEL": "MIXTURE",
+            // Dynamic text variables
+            "status_load": { nl: "Laden...", en: "Loading...", sw: "Inapakia..." },
+            "status_choose": { nl: "Kies CSV Bestand", en: "Choose CSV File", sw: "Chagua Faili la CSV" },
+            "status_connect": { nl: "Verbinden...", en: "Connecting...", sw: "Inaunganisha..." },
+            "status_cache": { nl: "Laden uit cache...", en: "Loading from cache...", sw: "Inapakia kutoka akiba..." },
+            "status_process": { nl: "Tekst verwerken...", en: "Processing text...", sw: "Inashughulikia maandishi..." },
+            "status_parse": { nl: "CSV inlezen...", en: "Parsing CSV...", sw: "Inachanganua CSV..." },
+            "status_fail": { nl: "LADEN MISLUKT", en: "LOADING FAILED", sw: "IMESHINDWA" },
+            "status_download": { nl: "Downloaden...", en: "Downloading...", sw: "Inapakua..." },
+            "status_loaded": { nl: "PRODUCTEN GELADEN", en: "PRODUCTS LOADED", sw: "BIDHAA ZIMEPAKIWA" },
+            
+            "all_forms": { nl: "Alle Vormen", en: "All Forms", sw: "Fomu Zote" },
+            "alt_single": { nl: "1 alternatief", en: "1 alternative", sw: "Mbadala 1" },
+            "alt_plural": { nl: "alternatieven", en: "alternatives", sw: "mbadala" },
+            "no_alts": { nl: "Geen alternatieven gevonden voor alle filters.", en: "No alternatives found matching all filters.", sw: "Hakuna mbadala zilizopatikana." },
+            "extra": { nl: "Extra:", en: "Extra:", sw: "Zaidi:" },
+            "less": { nl: "Minder:", en: "Less:", sw: "Chini:" },
+            "identical": { nl: "Identieke hulpstoffen", en: "Identical excipients", sw: "Viambato saidizi vinavyofanana" },
+            
+            "no_products": { nl: "Geen producten", en: "No products", sw: "Hakuna bidhaa" },
+            "no_substances": { nl: "Geen stoffen", en: "No substances", sw: "Hakuna dutu" },
+            "did_you_mean": { nl: "Bedoelde u misschien:", en: "Did you mean:", sw: "Ulimaanisha:" },
+            "no_results": { nl: "Geen resultaten gevonden voor", en: "No results found for", sw: "Hakuna matokeo yaliyopatikana kwa" },
+            "check_spelling": { nl: "Controleer de spelling.", en: "Check the spelling.", sw: "Angalia tahajia." },
+            "substance_lbl": { nl: "Stof:", en: "Substance:", sw: "Dutu:" },
+            "product_lbl": { nl: "Product:", en: "Product:", sw: "Bidhaa:" }
+        };
+
+        const dictMed = {
+            // Vormen
+            "TABLET": { en: "TABLET", sw: "KIDONGE" },
+            "ZETPIL": { en: "SUPPOSITORY", sw: "KIDONGE KUPITIA NJIA YA CHINI" },
+            "CAPSULE": { en: "CAPSULE", sw: "KAPSULI" },
+            "DRAGEE": { en: "COATED TABLET", sw: "KIDONGE KILICHOPAKWA" },
+            "KAUWTABLET": { en: "CHEWABLE TABLET", sw: "KIDONGE CHA KUTAFUNA" },
+            "BRUISTABLET": { en: "EFFERVESCENT TABLET", sw: "KIDONGE KINACHOYEYUKA" },
+            "SMELTTABLET": { en: "ORODISPERSIBLE TABLET", sw: "KIDONGE KINACHOYEYUKA MDOMONI" },
+            "ZUIGTABLET": { en: "LOZENGE", sw: "KIDONGE CHA KUNYONYA" },
+            "SUBLINGUAAL": { en: "SUBLINGUAL", sw: "CHINI YA ULIMI" },
+            "OROMUCOSAAL": { en: "OROMUCOSAL", sw: "KWENYE UTANDO WA MDOMO" },
+            "INJECTIEVLOEISTOF": { en: "SOLUTION FOR INJECTION", sw: "SULUHISHO LA SINDANO" },
+            "INFUSIEVLOEISTOF": { en: "SOLUTION FOR INFUSION", sw: "SULUHISHO LA INFUSIONI" },
+            "OPLOSSING": { en: "SOLUTION", sw: "SULUHISHO" },
+            "SUSPENSIE": { en: "SUSPENSION", sw: "MSUSPENSIO" },
+            "EMULSIE": { en: "EMULSION", sw: "EMULSI" },
+            "ZALF": { en: "OINTMENT", sw: "MARHAMU" },
+            "CREME": { en: "CREAM", sw: "KRIMU" },
+            "CRÈME": { en: "CREAM", sw: "KRIMU" },
+            "GEL": { en: "GEL", sw: "JELI" },
+            "PASTA": { en: "PASTE", sw: "PASTA" },
+            "OOGDRUPPELS": { en: "EYE DROPS", sw: "MATONE YA JICHO" },
+            "OORDRUPPELS": { en: "EAR DROPS", sw: "MATONE YA SIKIO" },
+            "NEUSDRUPPELS": { en: "NASAL DROPS", sw: "MATONE YA PUA" },
+            "NEUSSPRAY": { en: "NASAL SPRAY", sw: "DAWA YA KUPULIZA PUA" },
+            "INHALATIEPOEDER": { en: "INHALATION POWDER", sw: "PODA YA KUVUTA PUMZI" },
+            "VERNEVELVLOEISTOF": { en: "NEBULISER SOLUTION", sw: "SULUHISHO LA KUVUTA" },
+            "INHALATIEGAS": { en: "INHALATION GAS", sw: "GESI YA KUVUTA" },
+            "POEDER": { en: "POWDER", sw: "PODA" },
+            "GRANULAAT": { en: "GRANULES", sw: "CHEMBECHEMBE" },
+            "DRANK": { en: "ORAL SOLUTION", sw: "DAWA YA KUNYWA" },
+            "STROOP": { en: "SYRUP", sw: "SHIRA" },
+            "KLYSMA": { en: "ENEMA", sw: "ENEMA" },
+            "PLEISTER": { en: "TRANSDERMAL PATCH", sw: "KIBANDIKO CHA NGOZI" },
+            "SHAMPOO": { en: "SHAMPOO", sw: "SHAMPU" },
+            "LOTION": { en: "LOTION", sw: "LOSHENI" },
+            
+            "OMHULD": { en: "COATED", sw: "ILIZOPAKWA" },
+            "FILMOMHULD": { en: "FILM-COATED", sw: "ILIZOPAKWA FILAMU" },
+            "MAAGSAPRESISTENT": { en: "GASTRO-RESISTANT", sw: "INAYOKINZA TUMBO" },
+            "MGA": { en: "MODIFIED-RELEASE", sw: "KUTOLEWA KULIKOBADILISHWA" },
+            "MVA": { en: "MODIFIED-RELEASE", sw: "KUTOLEWA KULIKOBADILISHWA" },
+            "RETARD": { en: "PROLONGED-RELEASE", sw: "KUTOLEWA KWA MUDA MREFU" },
+            "GEREGULEERDE AFGIFTE": { en: "MODIFIED-RELEASE", sw: "KUTOLEWA KULIKOBADILISHWA" },
+            "VERLENGDE AFGIFTE": { en: "PROLONGED-RELEASE", sw: "KUTOLEWA KWA MUDA MREFU" },
+            "VERTRAAGDE AFGIFTE": { en: "DELAYED-RELEASE", sw: "KUTOLEWA KULIKOCHELEWESHWA" },
+            "VOOR": { en: "FOR", sw: "KWA" },
+            "INJECTIE": { en: "INJECTION", sw: "SINDANO" },
+            "INFUSIE": { en: "INFUSION", sw: "INFUSIONI" },
+            "CONCENTRAAT": { en: "CONCENTRATE", sw: "KONSENTRETI" },
+            "OPLOSSINGMIDDEL": { en: "SOLVENT", sw: "KIYEYUSHO" },
+            "MENGSEL": { en: "MIXTURE", sw: "MCHANGANYIKO" },
 
             // Hulpstoffen & Termen
-            "WATER": "WATER", "GEZUIVERD": "PURIFIED", "GEZUIVERD WATER": "PURIFIED WATER", "WATER VOOR INJECTIES": "WATER FOR INJECTIONS",
-            "MAISZETMEEL": "MAIZE STARCH", "AARDAPPELZETMEEL": "POTATO STARCH", "TARWEZETMEEL": "WHEAT STARCH", "ZETMEEL": "STARCH",
-            "LACTOSE": "LACTOSE", "LACTOSEMONOHYDRAAT": "LACTOSE MONOHYDRATE", "LACTOSE 1-WATER": "LACTOSE MONOHYDRATE", "LACTOSE ANHYDRAAT": "ANHYDROUS LACTOSE",
-            "MAGNESIUMSTEARAAT": "MAGNESIUM STEARATE", "STEARINEZUUR": "STEARIC ACID", "TALK": "TALC",
-            "SILICIUMDIOXIDE": "SILICON DIOXIDE", "COLLOÏDAAL": "COLLOIDAL", "COLLOIDAAL": "COLLOIDAL", "WATERVRIJ": "ANHYDROUS",
-            "COLLOÏDAAL WATERVRIJ SILICIUMDIOXIDE": "COLLOIDAL ANHYDROUS SILICA", "COLLOIDAAL SILICIUMDIOXIDE": "COLLOIDAL SILICON DIOXIDE",
-            "TITAANDIOXIDE": "TITANIUM DIOXIDE", "TITANIUMDIOXIDE": "TITANIUM DIOXIDE",
-            "IJZEROXIDE GEEL": "YELLOW IRON OXIDE", "IJZEROXIDE ROOD": "RED IRON OXIDE", "IJZEROXIDE ZWART": "BLACK IRON OXIDE",
-            "GELE IJZEROXIDE": "YELLOW IRON OXIDE", "RODE IJZEROXIDE": "RED IRON OXIDE", "ZWARTE IJZEROXIDE": "BLACK IRON OXIDE", "IJZEROXIDE": "IRON OXIDE",
-            "GELATINE": "GELATIN", "GLYCEROL": "GLYCEROL", "POVIDON": "POVIDONE",
-            "CROSPOVIDON": "CROSPOVIDONE", "MACROGOL": "MACROGOL", "HYPROMELLOSE": "HYPROMELLOSE", "METHYLCELLULOSE": "METHYLCELLULOSE",
-            "MICROKRISTALLIJNE CELLULOSE": "MICROCRYSTALLINE CELLULOSE", "CELLULOSE, MICROKRISTALLIJN": "CELLULOSE, MICROCRYSTALLINE",
-            "CROSCARMELLOSENATRIUM": "CROSCARMELLOSE SODIUM", "NATRIUMZETMEELGLYCOLAAT": "SODIUM STARCH GLYCOLATE",
-            "SACCHAROSE": "SUCROSE", "SUIKER": "SUGAR", "GLUCOSE": "GLUCOSE", "FRUCTOSE": "FRUCTOSE",
-            "CITROENZUUR": "CITRIC ACID", "CITROENZUURMONOHYDRAAT": "CITRIC ACID MONOHYDRATE", "NATRIUMCITRAAT": "SODIUM CITRATE",
-            "NATRIUMCHLORIDE": "SODIUM CHLORIDE", "NATRIUMHYDROXIDE": "SODIUM HYDROXIDE", "ZOUTZUUR": "HYDROCHLORIC ACID",
-            "ALCOHOL": "ALCOHOL", "ETHANOL": "ETHANOL", "ISOPROPYLALCOHOL": "ISOPROPYL ALCOHOL", "PROPYLEENGLYCOL": "PROPYLENE GLYCOL",
-            "ASPARTAAM": "ASPARTAME", "SACCHARINE": "SACCHARIN", "SACCHARINENATRIUM": "SACCHARIN SODIUM",
-            "XYLITOL": "XYLITOL", "MANNITOL": "MANNITOL", "SORBITOL": "SORBITOL", "MALTITOL": "MALTITOL", "SUCRALOSE": "SUCRALOSE",
-            "PINDA-OLIE": "PEANUT OIL", "ARACHIDEOLIE": "PEANUT OIL", "SOJA-OLIE": "SOYBEAN OIL", "ZONNEBLOEMOLIE": "SUNFLOWER OIL", "OLIJFOLIE": "OLIVE OIL", "SESAMOLIE": "SESAME OIL",
-            "MUNTOLIE": "PEPPERMINT OIL", "PEPERMUNTOLIE": "PEPPERMINT OIL", "ANYSOLIE": "ANISE OIL", "ANIJSOLIE": "ANISE OIL",
-            "INDIGOKARMIJN": "INDIGO CARMINE", "ERYTHROSINE": "ERYTHROSINE", "TARTRAZINE": "TARTRAZINE",
-            "ZONNEGEEL": "SUNSET YELLOW", "ALLURA ROOD": "ALLURA RED", "AMARANT": "AMARANTH", "BRILJANTBLAUW": "BRILLIANT BLUE",
-            "ONBEKEND": "UNKNOWN", "OVERIG": "OTHER", "ZONDER": "WITHOUT", "MET": "WITH", "BEVAT": "CONTAINS"
+            "WATER": { en: "WATER", sw: "MAJI" },
+            "GEZUIVERD": { en: "PURIFIED", sw: "ILIYOSAFISHWA" },
+            "GEZUIVERD WATER": { en: "PURIFIED WATER", sw: "MAJI YALIYOSAFISHWA" },
+            "WATER VOOR INJECTIES": { en: "WATER FOR INJECTIONS", sw: "MAJI YA SINDANO" },
+            "MAISZETMEEL": { en: "MAIZE STARCH", sw: "WANGA WA MAHINDI" },
+            "AARDAPPELZETMEEL": { en: "POTATO STARCH", sw: "WANGA WA VIAZI" },
+            "TARWEZETMEEL": { en: "WHEAT STARCH", sw: "WANGA WA NGANO" },
+            "ZETMEEL": { en: "STARCH", sw: "WANGA" },
+            "LACTOSE": { en: "LACTOSE", sw: "LAKTOSI" },
+            "LACTOSEMONOHYDRAAT": { en: "LACTOSE MONOHYDRATE", sw: "LAKTOSI MONOHIDRATI" },
+            "LACTOSE 1-WATER": { en: "LACTOSE MONOHYDRATE", sw: "LAKTOSI MONOHIDRATI" },
+            "LACTOSE ANHYDRAAT": { en: "ANHYDROUS LACTOSE", sw: "LAKTOSI BILA MAJI" },
+            "MAGNESIUMSTEARAAT": { en: "MAGNESIUM STEARATE", sw: "MAGNESIAMU STEARATI" },
+            "STEARINEZUUR": { en: "STEARIC ACID", sw: "ASIDI YA STEARIKI" },
+            "TALK": { en: "TALC", sw: "TALKI" },
+            "SILICIUMDIOXIDE": { en: "SILICON DIOXIDE", sw: "SILIKONI DIOKSIDI" },
+            "COLLOÏDAAL": { en: "COLLOIDAL", sw: "KOLOIDI" },
+            "COLLOIDAAL": { en: "COLLOIDAL", sw: "KOLOIDI" },
+            "WATERVRIJ": { en: "ANHYDROUS", sw: "BILA MAJI" },
+            "COLLOÏDAAL WATERVRIJ SILICIUMDIOXIDE": { en: "COLLOIDAL ANHYDROUS SILICA", sw: "KOLOIDI SILIKA BILA MAJI" },
+            "COLLOIDAAL SILICIUMDIOXIDE": { en: "COLLOIDAL SILICON DIOXIDE", sw: "KOLOIDI SILIKONI DIOKSIDI" },
+            "TITAANDIOXIDE": { en: "TITANIUM DIOXIDE", sw: "TITANIAMU DIOKSIDI" },
+            "TITANIUMDIOXIDE": { en: "TITANIUM DIOXIDE", sw: "TITANIAMU DIOKSIDI" },
+            "IJZEROXIDE GEEL": { en: "YELLOW IRON OXIDE", sw: "OKSIDI YA CHUMA YA MANJANO" },
+            "IJZEROXIDE ROOD": { en: "RED IRON OXIDE", sw: "OKSIDI YA CHUMA NYEKUNDU" },
+            "IJZEROXIDE ZWART": { en: "BLACK IRON OXIDE", sw: "OKSIDI YA CHUMA NYEUSI" },
+            "GELE IJZEROXIDE": { en: "YELLOW IRON OXIDE", sw: "OKSIDI YA CHUMA YA MANJANO" },
+            "RODE IJZEROXIDE": { en: "RED IRON OXIDE", sw: "OKSIDI YA CHUMA NYEKUNDU" },
+            "ZWARTE IJZEROXIDE": { en: "BLACK IRON OXIDE", sw: "OKSIDI YA CHUMA NYEUSI" },
+            "IJZEROXIDE": { en: "IRON OXIDE", sw: "OKSIDI YA CHUMA" },
+            "GELATINE": { en: "GELATIN", sw: "JELATINI" },
+            "GLYCEROL": { en: "GLYCEROL", sw: "GLISEROLI" },
+            "POVIDON": { en: "POVIDONE", sw: "POVIDONI" },
+            "CROSPOVIDON": { en: "CROSPOVIDONE", sw: "KROSPOVIDONI" },
+            "MACROGOL": { en: "MACROGOL", sw: "MAKROGOLI" },
+            "HYPROMELLOSE": { en: "HYPROMELLOSE", sw: "HIPROMELOSI" },
+            "METHYLCELLULOSE": { en: "METHYLCELLULOSE", sw: "METILISELULOSI" },
+            "MICROKRISTALLIJNE CELLULOSE": { en: "MICROCRYSTALLINE CELLULOSE", sw: "SELULOSI NDOGO YA FUWELE" },
+            "CELLULOSE, MICROKRISTALLIJN": { en: "CELLULOSE, MICROCRYSTALLINE", sw: "SELULOSI, NDOGO YA FUWELE" },
+            "CROSCARMELLOSENATRIUM": { en: "CROSCARMELLOSE SODIUM", sw: "KROSKARMELOSI SODIAMU" },
+            "NATRIUMZETMEELGLYCOLAAT": { en: "SODIUM STARCH GLYCOLATE", sw: "SODIAMU WANGA GLIKOLATI" },
+            "SACCHAROSE": { en: "SUCROSE", sw: "SUKROSI" },
+            "SUIKER": { en: "SUGAR", sw: "SUKARI" },
+            "GLUCOSE": { en: "GLUCOSE", sw: "GLUKOSI" },
+            "FRUCTOSE": { en: "FRUCTOSE", sw: "FRUKTOSI" },
+            "CITROENZUUR": { en: "CITRIC ACID", sw: "ASIDI YA SITRIKI" },
+            "CITROENZUURMONOHYDRAAT": { en: "CITRIC ACID MONOHYDRATE", sw: "ASIDI YA SITRIKI MONOHIDRATI" },
+            "NATRIUMCITRAAT": { en: "SODIUM CITRATE", sw: "SODIAMU SITRATI" },
+            "NATRIUMCHLORIDE": { en: "SODIUM CHLORIDE", sw: "SODIAMU KLORIDI" },
+            "NATRIUMHYDROXIDE": { en: "SODIUM HYDROXIDE", sw: "SODIAMU HAIDROKSIDI" },
+            "ZOUTZUUR": { en: "HYDROCHLORIC ACID", sw: "ASIDI YA HAIDROKLORIKI" },
+            "ALCOHOL": { en: "ALCOHOL", sw: "POMBE" },
+            "ETHANOL": { en: "ETHANOL", sw: "ETANOLI" },
+            "ISOPROPYLALCOHOL": { en: "ISOPROPYL ALCOHOL", sw: "ISOPROPILI ALKOHOLI" },
+            "PROPYLEENGLYCOL": { en: "PROPYLENE GLYCOL", sw: "PROPYLENI GLIKOLI" },
+            "ASPARTAAM": { en: "ASPARTAME", sw: "ASPATAMU" },
+            "SACCHARINE": { en: "SACCHARIN", sw: "SAKARINI" },
+            "SACCHARINENATRIUM": { en: "SACCHARIN SODIUM", sw: "SAKARINI SODIAMU" },
+            "XYLITOL": { en: "XYLITOL", sw: "KSILITOLI" },
+            "MANNITOL": { en: "MANNITOL", sw: "MANITOLI" },
+            "SORBITOL": { en: "SORBITOL", sw: "SOBITOLI" },
+            "MALTITOL": { en: "MALTITOL", sw: "MALTITOLI" },
+            "SUCRALOSE": { en: "SUCRALOSE", sw: "SUKRALOSI" },
+            "PINDA-OLIE": { en: "PEANUT OIL", sw: "MAFUTA YA KARANGA" },
+            "ARACHIDEOLIE": { en: "PEANUT OIL", sw: "MAFUTA YA KARANGA" },
+            "SOJA-OLIE": { en: "SOYBEAN OIL", sw: "MAFUTA YA SOYA" },
+            "ZONNEBLOEMOLIE": { en: "SUNFLOWER OIL", sw: "MAFUTA YA ALIZETI" },
+            "OLIJFOLIE": { en: "OLIVE OIL", sw: "MAFUTA YA MZAITUNI" },
+            "SESAMOLIE": { en: "SESAME OIL", sw: "MAFUTA YA UFUUTA" },
+            "MUNTOLIE": { en: "PEPPERMINT OIL", sw: "MAFUTA YA MNAANA" },
+            "PEPERMUNTOLIE": { en: "PEPPERMINT OIL", sw: "MAFUTA YA MNAANA" },
+            "ANYSOLIE": { en: "ANISE OIL", sw: "MAFUTA YA ANISI" },
+            "ANIJSOLIE": { en: "ANISE OIL", sw: "MAFUTA YA ANISI" },
+            "INDIGOKARMIJN": { en: "INDIGO CARMINE", sw: "INDIGO KAMINI" },
+            "ERYTHROSINE": { en: "ERYTHROSINE", sw: "ERITROSINI" },
+            "TARTRAZINE": { en: "TARTRAZINE", sw: "TATRAZINI" },
+            "ZONNEGEEL": { en: "SUNSET YELLOW", sw: "MANJANO YA JUA" },
+            "ALLURA ROOD": { en: "ALLURA RED", sw: "NYEKUNDU YA ALURA" },
+            "AMARANT": { en: "AMARANTH", sw: "AMARANTI" },
+            "BRILJANTBLAUW": { en: "BRILLIANT BLUE", sw: "BLUU INAYONG'AA" },
+            "ONBEKEND": { en: "UNKNOWN", sw: "HAIJULIKANI" },
+            "OVERIG": { en: "OTHER", sw: "MENGINE" },
+            "ZONDER": { en: "WITHOUT", sw: "BILA" },
+            "MET": { en: "WITH", sw: "NA" },
+            "BEVAT": { en: "CONTAINS", sw: "INA" }
         };
-        const sortedDictKeys = Object.keys(nlToEn).sort((a, b) => b.length - a.length);
+        
+        const sortedDictKeys = Object.keys(dictMed).sort((a, b) => b.length - a.length);
+
+        window.setLanguage = function(lang) {
+            currentLang = lang;
+            
+            // Update all static UI elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (uiDict[key] && uiDict[key][currentLang]) {
+                    if (el.tagName === 'INPUT') { el.placeholder = uiDict[key][currentLang]; }
+                    else { el.textContent = uiDict[key][currentLang]; }
+                }
+            });
+            
+            // Update visual state of flag buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.add('opacity-40', 'grayscale', 'hover:grayscale-0', 'hover:opacity-100');
+                btn.classList.remove('opacity-100', 'grayscale-0', 'scale-110', 'bg-white', 'shadow-sm');
+            });
+            const activeBtn = document.getElementById('lang-' + currentLang);
+            if(activeBtn) {
+                activeBtn.classList.remove('opacity-40', 'grayscale', 'hover:grayscale-0', 'hover:opacity-100');
+                activeBtn.classList.add('opacity-100', 'grayscale-0', 'scale-110', 'bg-white', 'shadow-sm');
+            }
+
+            // Re-render components holding dynamic text
+            renderPopularTiles();
+            if(!document.getElementById('result-container').classList.contains('hidden')) {
+                 const rvgText = document.getElementById('res-rvg').textContent;
+                 if(rvgText) {
+                     const rvg = rvgText.replace("RVG ", "").trim();
+                     const p = database.find(i => String(i.REGISTRATIENUMMER) === String(rvg));
+                     if(p) finalizeSearch(p);
+                 }
+            } else if (!document.getElementById('search-suggestions').classList.contains('hidden')) {
+                 executeLiveSearch();
+            }
+        };
 
         function t(originalStr) {
             if (!originalStr || originalStr === "-") return originalStr;
+            if (currentLang === 'nl') return originalStr; // Geef native source terug in NL stand
+            
             let translatedStr = originalStr;
             let hasTranslation = false;
             
             const exactUpper = originalStr.toUpperCase().trim();
-            if (nlToEn[exactUpper]) {
-                translatedStr = nlToEn[exactUpper];
+            if (dictMed[exactUpper] && dictMed[exactUpper][currentLang]) {
+                translatedStr = dictMed[exactUpper][currentLang];
                 hasTranslation = true;
             } else {
                 let tempStr = originalStr.toUpperCase();
@@ -226,7 +416,7 @@
                         // Gebruik \b (word boundaries) om foutieve partiële woordvervangingen te voorkomen
                         const keyRegex = new RegExp('\\b' + key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi');
                         if (keyRegex.test(translatedStr)) {
-                            translatedStr = translatedStr.replace(keyRegex, nlToEn[key]);
+                            translatedStr = translatedStr.replace(keyRegex, dictMed[key][currentLang]);
                             hasTranslation = true;
                         }
                     }
@@ -235,9 +425,9 @@
             
             const safeOriginal = originalStr.replace(/"/g, '&quot;');
             if (hasTranslation && translatedStr.toUpperCase() !== originalStr.toUpperCase()) {
-                return `<span title="Original NL: ${safeOriginal}" class="cursor-help border-b border-dotted border-slate-400">${translatedStr}</span>`;
+                return `<span title="NL: ${safeOriginal}" class="cursor-help border-b border-dotted border-slate-400">${translatedStr}</span>`;
             }
-            return `<span title="Original NL: ${safeOriginal}" class="cursor-help">${translatedStr}</span>`;
+            return `<span title="NL: ${safeOriginal}" class="cursor-help">${translatedStr}</span>`;
         }
 
         let database = [];
