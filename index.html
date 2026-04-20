@@ -12,6 +12,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#2b3a7b">
 
+    <!-- App Iconen -->
+    <link rel="icon" type="image/png" href="app-icon.png">
+    <link rel="apple-touch-icon" href="app-icon.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -34,6 +38,7 @@
     <nav class="border-b border-gray-100 p-4 bg-white sticky top-0 z-[100] shadow-sm">
         <div class="w-[95%] md:w-[90%] max-w-[1600px] mx-auto flex items-center justify-between gap-4">
             <div class="flex items-center gap-4">
+                <img src="app-icon.png" alt="Quick Ref Logo" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shadow-sm border border-slate-100">
                 <h1 class="text-lg font-bold benu-blue tracking-tight hidden sm:block" data-i18n="title">Quick Reference</h1>
                 <div class="flex gap-1 bg-slate-100 rounded-full p-1.5 border border-slate-200 ml-2">
                     <button id="lang-nl" onclick="setLanguage('nl')" class="lang-btn w-8 h-8 rounded-full flex items-center justify-center text-xl transition-all" title="Nederlands">🇳🇱</button>
