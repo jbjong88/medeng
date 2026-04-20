@@ -941,8 +941,7 @@
             renderPopularTiles(); 
             
             if (CSV_WEB_URL) {
-                document.getElementById('status-text').textContent = "Load Database";
-                document.getElementById('status-icon').className = "fa-solid fa-cloud-arrow-down text-blue-500 animate-none";
+                loadDataFromURL(CSV_WEB_URL);
             } else {
                 document.getElementById('status-text').textContent = "Choose CSV File";
                 document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
