@@ -426,9 +426,15 @@
                 let csvText = '';
                 let cache = null;
                 let cachedResponse = null;
-                if ('caches' in window) {
-                    cache = await caches.open(cacheName);
-                    cachedResponse = isCacheValid ? await cache.match(url) : null;
+                
+                try {
+                    // Cache API is vaak geblokkeerd op file:// protocollen
+                    if ('caches' in window && window.location.protocol !== 'file:') {
+                        cache = await caches.open(cacheName);
+                        cachedResponse = isCacheValid ? await cache.match(url) : null;
+                    }
+                } catch (e) {
+                    console.warn("Cache niet beschikbaar:", e);
                 }
 
                 if (cachedResponse) {
@@ -438,42 +444,20 @@
                     document.getElementById('status-text').textContent = uiDict['status_connect'][currentLang];
                     
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error("Netwerk response was niet ok");
+                    if (!response.ok) {
+                        if (response.status === 404) throw new Error("404: Link fout (is het main of master?)");
+                        throw new Error(`Netwerkfout: ${response.status}`);
+                    }
                     
-                    if (cache) cache.put(url, response.clone());
-                    localStorage.setItem(cacheTimeKey, Date.now().toString());
+                    document.getElementById('status-text').textContent = uiDict['status_download'][currentLang];
+                    csvText = await response.text();
                     
-                    // Stream uitlezen om download voortgang te tonen
-                    const reader = response.body.getReader();
-                    const contentLength = +response.headers.get('Content-Length');
-                    let receivedLength = 0;
-                    let chunks = [];
-                    
-                    while (true) {
-                        const {done, value} = await reader.read();
-                        if (done) break;
-                        chunks.push(value);
-                        receivedLength += value.length;
-                        
-                        let mb = (receivedLength / (1024 * 1024)).toFixed(1);
-                        if (contentLength) {
-                            let percent = Math.round((receivedLength / contentLength) * 100);
-                            document.getElementById('status-text').textContent = `Downloading... ${percent}%`;
-                        } else {
-                            document.getElementById('status-text').textContent = `Downloading... ${mb} MB`;
+                    try {
+                        if (cache) {
+                            cache.put(url, new Response(csvText));
+                            localStorage.setItem(cacheTimeKey, Date.now().toString());
                         }
-                    }
-                    
-                    document.getElementById('status-text').textContent = "Processing text...";
-                    
-                    // Stukjes data samenvoegen tot 1 lange tekst
-                    let chunksAll = new Uint8Array(receivedLength);
-                    let position = 0;
-                    for (let chunk of chunks) {
-                        chunksAll.set(chunk, position);
-                        position += chunk.length;
-                    }
-                    csvText = new TextDecoder("utf-8").decode(chunksAll);
+                    } catch(e) {}
                 }
 
                 document.getElementById('status-text').textContent = uiDict['status_parse'][currentLang];
@@ -492,16 +476,15 @@
                         document.getElementById('status-icon').className = "fa-solid fa-check-circle text-emerald-500 animate-none";
                     },
                     error: (err) => {
-                        throw new Error(err);
+                        throw new Error("Parse fout: " + (err.message || err));
                     }
                 });
 
             } catch (err) {
                 console.error("Fetch of Parse Fout:", err);
-                document.getElementById('status-text').textContent = uiDict['status_choose'][currentLang];
-                document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
+                document.getElementById('status-text').textContent = "FOUT: " + err.message;
+                document.getElementById('status-icon').className = "fa-solid fa-triangle-exclamation text-red-500 animate-none";
                 attemptUrl = false; // Volgende klik opent direct de verkenner
-                document.getElementById('csvFileInput').click(); // Automatische fallback naar lokaal bestand
             }
         }
 
