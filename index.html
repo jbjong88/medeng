@@ -398,7 +398,7 @@
         }
 
         // --- URL CONFIGURATIE ---
-        const CSV_WEB_URL = "metadata.csv"; 
+        const CSV_WEB_URL = "https://raw.githubusercontent.com/jbjong88/medeng/main/metadata.csv"; 
         let attemptUrl = true;
 
         function openUploadModal() {
@@ -426,6 +426,12 @@
                 let csvText = '';
                 const cache = await caches.open(cacheName);
                 let cachedResponse = isCacheValid ? await cache.match(url) : null;
+                let cache = null;
+                let cachedResponse = null;
+                if ('caches' in window) {
+                    cache = await caches.open(cacheName);
+                    cachedResponse = isCacheValid ? await cache.match(url) : null;
+                }
 
                 if (cachedResponse) {
                     document.getElementById('status-text').textContent = uiDict['status_cache'][currentLang];
@@ -437,6 +443,7 @@
                     if (!response.ok) throw new Error("Netwerk response was niet ok");
                     
                     cache.put(url, response.clone());
+                    if (cache) cache.put(url, response.clone());
                     localStorage.setItem(cacheTimeKey, Date.now().toString());
                     
                     // Stream uitlezen om download voortgang te tonen
