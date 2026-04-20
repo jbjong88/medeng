@@ -911,6 +911,7 @@
             
             const cats = getCats(p.FARMACEUTISCHEVORM);
             document.getElementById('res-vorm-container').innerHTML = `<div class="flex gap-2 text-xl">${cats.map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 mx-2">${t(p.FARMACEUTISCHEVORM)}</span>`;
+            document.getElementById('res-vorm-container').innerHTML = `<div class="flex gap-2 text-xl">${cats.map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 mx-2 text-xs sm:text-base">${t(p.FARMACEUTISCHEVORM)}</span>`;
             
             document.getElementById('res-stof-container').innerHTML = (p.WERKZAMESTOFFEN||"").split('#').filter(s => s.trim() !== "").map(s => `<div class="benu-bg-green text-white border border-white/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-tight shadow-sm flex items-center gap-2"><i class="fa-solid fa-circle-check text-[10px] opacity-50"></i> ${t(s.trim())}</div>`).join('');
 
@@ -1047,12 +1048,18 @@
                     <div class="flex justify-between items-center cursor-pointer">
                         <div class="flex items-center gap-4 min-w-0">
                             <div class="flex gap-1 text-slate-400 group-hover:text-[#84ad41] text-xl">${getCats(a.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 cursor-pointer">
+                        <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <div class="flex gap-1 text-slate-400 group-hover:text-[#84ad41] text-xl sm:text-2xl">${getCats(a.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
                             <div class="flex flex-col min-w-0">
                                 <span class="font-bold text-slate-700 group-hover:text-[#6f8b34] truncate text-sm">${t(a.PRODUCTNAAM)}</span>
                                 <span class="text-[9px] text-slate-400 uppercase truncate">${t(a.HANDELSVERGUNNINGHOUDER)}</span>
+                                <span class="font-bold text-slate-700 group-hover:text-[#6f8b34] truncate text-sm sm:text-base">${t(a.PRODUCTNAAM)}</span>
+                                <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase truncate">${t(a.HANDELSVERGUNNINGHOUDER)}</span>
                             </div>
                         </div>
                         <span class="text-xs font-mono text-slate-300 group-hover:text-slate-500 shrink-0 ml-4">RVG ${a.REGISTRATIENUMMER}</span>
+                        <span class="text-[10px] sm:text-xs font-mono text-slate-400 sm:text-slate-300 group-hover:text-slate-500 shrink-0 sm:ml-4 self-start sm:self-auto bg-slate-50 sm:bg-transparent px-2 py-1 sm:p-0 rounded border border-slate-100 sm:border-transparent">RVG ${a.REGISTRATIENUMMER}</span>
                     </div>
                     <div class="border-t border-slate-50 mt-3 pt-2">
                         ${a.diffCount === 0 ? '<span class="text-[9px] text-[#6f8b34] font-black uppercase flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> ' + uiDict['identical'][currentLang] + '</span>' : diffHTML}
