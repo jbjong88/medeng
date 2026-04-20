@@ -424,8 +424,6 @@
                 const isCacheValid = lastFetch && (Date.now() - parseInt(lastFetch)) < ONE_WEEK;
 
                 let csvText = '';
-                const cache = await caches.open(cacheName);
-                let cachedResponse = isCacheValid ? await cache.match(url) : null;
                 let cache = null;
                 let cachedResponse = null;
                 if ('caches' in window) {
@@ -442,7 +440,6 @@
                     const response = await fetch(url);
                     if (!response.ok) throw new Error("Netwerk response was niet ok");
                     
-                    cache.put(url, response.clone());
                     if (cache) cache.put(url, response.clone());
                     localStorage.setItem(cacheTimeKey, Date.now().toString());
                     
