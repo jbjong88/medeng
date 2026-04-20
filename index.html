@@ -158,6 +158,76 @@
     <input type="file" id="csvFileInput" accept=".csv" class="hidden">
 
     <script>
+        // --- TRANSLATION LAYER ---
+        const nlToEn = {
+            "TABLET": "TABLET", "ZETPIL": "SUPPOSITORY", "CAPSULE": "CAPSULE", "DRAGEE": "COATED TABLET",
+            "KAUWTABLET": "CHEWABLE TABLET", "BRUISTABLET": "EFFERVESCENT TABLET", "SMELTTABLET": "ORODISPERSIBLE TABLET",
+            "INJECTIEVLOEISTOF": "INJECTION LIQUID", "INFUSIEVLOEISTOF": "INFUSION LIQUID", "OPLOSSING": "SOLUTION",
+            "SUSPENSIE": "SUSPENSION", "ZALF": "OINTMENT", "CREME": "CREAM", "CRÈME": "CREAM", "GEL": "GEL",
+            "OOGDRUPPELS": "EYE DROPS", "OORDRUPPELS": "EAR DROPS", "NEUSDRUPPELS": "NASAL DROPS", "NEUSSPRAY": "NASAL SPRAY",
+            "INHALATIEPOEDER": "INHALATION POWDER", "VERNEVELVLOEISTOF": "NEBULISER SOLUTION", "POEDER": "POWDER",
+            "GRANULAAT": "GRANULES", "DRANK": "SYRUP/LIQUID", "STROOP": "SYRUP", "KLYSMA": "ENEMA", "PLEISTER": "PATCH",
+            "OMHULD": "COATED", "FILMOMHULD": "FILM-COATED", "MAAGSAPRESISTENT": "GASTRO-RESISTANT",
+            "MGA": "MODIFIED RELEASE", "MVA": "MODIFIED RELEASE", "RETARD": "PROLONGED RELEASE",
+            "VOOR": "FOR", "INJECTIE": "INJECTION", "INFUSIE": "INFUSION",
+            "WATER": "WATER", "GEZUIVERD": "PURIFIED", "GEZUIVERD WATER": "PURIFIED WATER",
+            "MAISZETMEEL": "CORN STARCH", "AARDAPPELZETMEEL": "POTATO STARCH", "TARWEZETMEEL": "WHEAT STARCH", "ZETMEEL": "STARCH",
+            "LACTOSE": "LACTOSE", "LACTOSEMONOHYDRAAT": "LACTOSE MONOHYDRATE", "LACTOSE 1-WATER": "LACTOSE MONOHYDRATE",
+            "MAGNESIUMSTEARAAT": "MAGNESIUM STEARATE", "STEARINEZUUR": "STEARIC ACID", "TALK": "TALC",
+            "SILICIUMDIOXIDE": "SILICON DIOXIDE", "COLLOÏDAAL": "COLLOIDAL", "COLLOIDAAL": "COLLOIDAL",
+            "TITAANDIOXIDE": "TITANIUM DIOXIDE", "TITANIUMDIOXIDE": "TITANIUM DIOXIDE",
+            "IJZEROXIDE GEEL": "YELLOW IRON OXIDE", "IJZEROXIDE ROOD": "RED IRON OXIDE",
+            "IJZEROXIDE ZWART": "BLACK IRON OXIDE", "GELE IJZEROXIDE": "YELLOW IRON OXIDE",
+            "RODE IJZEROXIDE": "RED IRON OXIDE", "ZWARTE IJZEROXIDE": "BLACK IRON OXIDE",
+            "GELATINE": "GELATIN", "GLYCEROL": "GLYCEROL", "POVIDON": "POVIDONE",
+            "CROSPOVIDON": "CROSPOVIDONE", "MACROGOL": "MACROGOL", "HYPROMELLOSE": "HYPROMELLOSE",
+            "MICROKRISTALLIJNE CELLULOSE": "MICROCRYSTALLINE CELLULOSE", "CELLULOSE, MICROKRISTALLIJN": "CELLULOSE, MICROCRYSTALLINE",
+            "SACCHAROSE": "SUCROSE", "SUIKER": "SUGAR", "GLUCOSE": "GLUCOSE", "FRUCTOSE": "FRUCTOSE",
+            "CITROENZUUR": "CITRIC ACID", "CITROENZUURMONOHYDRAAT": "CITRIC ACID MONOHYDRATE",
+            "NATRIUMCHLORIDE": "SODIUM CHLORIDE", "NATRIUMHYDROXIDE": "SODIUM HYDROXIDE", "ZOUTZUUR": "HYDROCHLORIC ACID",
+            "ALCOHOL": "ALCOHOL", "ETHANOL": "ETHANOL", "ISOPROPYLALCOHOL": "ISOPROPYL ALCOHOL",
+            "ASPARTAAM": "ASPARTAME", "SACCHARINE": "SACCHARIN", "XYLITOL": "XYLITOL", "MANNITOL": "MANNITOL",
+            "SORBITOL": "SORBITOL", "MALTITOL": "MALTITOL", "SUCRALOSE": "SUCRALOSE",
+            "PINDA-OLIE": "PEANUT OIL", "SOJA-OLIE": "SOYBEAN OIL", "ZONNEBLOEMOLIE": "SUNFLOWER OIL", "OLIJFOLIE": "OLIVE OIL",
+            "MUNTOLIE": "PEPPERMINT OIL", "PEPERMUNTOLIE": "PEPPERMINT OIL", "ANYSOLIE": "ANISE OIL",
+            "INDIGOKARMIJN": "INDIGO CARMINE", "ERYTHROSINE": "ERYTHROSINE", "TARTRAZINE": "TARTRAZINE",
+            "ZONNEGEEL": "SUNSET YELLOW", "ALLURA ROOD": "ALLURA RED", "AMARANT": "AMARANTH",
+            "BRILJANTBLAUW": "BRILLIANT BLUE", "ONBEKEND": "UNKNOWN", "OVERIG": "OTHER", "ZONDER": "WITHOUT", "MET": "WITH"
+        };
+        // Sorteer op lengte zodat we de langste termen ('Gezuiverd water') altijd vóór de korte termen ('water') vertalen.
+        const sortedDictKeys = Object.keys(nlToEn).sort((a, b) => b.length - a.length);
+
+        function t(originalStr) {
+            if (!originalStr || originalStr === "-") return originalStr;
+            let translatedStr = originalStr;
+            let hasTranslation = false;
+            
+            const exactUpper = originalStr.toUpperCase().trim();
+            if (nlToEn[exactUpper]) {
+                translatedStr = nlToEn[exactUpper];
+                hasTranslation = true;
+            } else {
+                let tempStr = originalStr.toUpperCase();
+                for (let key of sortedDictKeys) {
+                    if (tempStr.includes(key)) {
+                        // Veilig vervangen ongeacht leestekens
+                        const keyRegex = new RegExp(key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                        if (keyRegex.test(translatedStr)) {
+                            translatedStr = translatedStr.replace(keyRegex, nlToEn[key]);
+                            hasTranslation = true;
+                        }
+                    }
+                }
+            }
+            
+            const safeOriginal = originalStr.replace(/"/g, '&quot;');
+            if (hasTranslation && translatedStr.toUpperCase() !== originalStr.toUpperCase()) {
+                return `<span title="Original NL: ${safeOriginal}" class="cursor-help border-b border-dotted border-slate-400">${translatedStr}</span>`;
+            }
+            // Als we geen vertaling konden vinden, wrappen we het origineel evengoed in een span voor consistentie
+            return `<span title="Original NL: ${safeOriginal}" class="cursor-help">${translatedStr}</span>`;
+        }
+
         let database = [];
         let alternatievenData = [];
         let uniekeSubstanties = [];
@@ -498,13 +568,13 @@
             if (productMatches.length || substanceMatches.length) {
                 document.getElementById('suggest-products').innerHTML = productMatches.map(m => `
                     <div class="px-5 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchIndex(${database.indexOf(m)})">
-                        <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${m.PRODUCTNAAM}</div><div class="text-[10px] text-slate-400 font-mono">RVG ${m.REGISTRATIENUMMER}</div></div>
+                        <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${t(m.PRODUCTNAAM)}</div><div class="text-[10px] text-slate-400 font-mono">RVG ${m.REGISTRATIENUMMER}</div></div>
                         <div class="text-slate-300 group-hover:text-blue-200 text-xs">${getCats(m.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
                     </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No products</div>';
 
                 document.getElementById('suggest-substances').innerHTML = substanceMatches.map(s => `
                     <div class="px-5 py-3 hover:bg-[#ecf4d1] cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchStof('${s}')">
-                        <div class="font-bold text-slate-700 text-sm truncate group-hover:text-[#6f8b34]">${s}</div>
+                        <div class="font-bold text-slate-700 text-sm truncate group-hover:text-[#6f8b34]">${t(s)}</div>
                     </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No substances</div>';
 
                 suggestionsPanel.classList.remove('hidden');
@@ -533,12 +603,12 @@
             searchInput.value = p.PRODUCTNAAM;
             suggestionsPanel.classList.add('hidden');
             
-            document.getElementById('res-naam').textContent = p.PRODUCTNAAM;
-            document.getElementById('res-rvg').textContent = "RVG " + p.REGISTRATIENUMMER;
+            document.getElementById('res-naam').innerHTML = t(p.PRODUCTNAAM);
+            document.getElementById('res-rvg').innerHTML = "RVG " + p.REGISTRATIENUMMER;
             
             const atcCode = p.ATC && p.ATC !== "-" ? p.ATC.split(' ')[0] : null;
             document.getElementById('res-atc-badge').textContent = "ATC: " + (atcCode || "-");
-            document.getElementById('res-atc-full').textContent = p.ATC || "-";
+            document.getElementById('res-atc-full').innerHTML = t(p.ATC) || "-";
             
             document.getElementById('res-atc-btn').onclick = () => {
                 if (!atcCode) return;
@@ -551,14 +621,14 @@
             };
             
             const cats = getCats(p.FARMACEUTISCHEVORM);
-            document.getElementById('res-vorm-container').innerHTML = `<div class="flex gap-2 text-xl">${cats.map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 mx-2">${p.FARMACEUTISCHEVORM}</span>`;
+            document.getElementById('res-vorm-container').innerHTML = `<div class="flex gap-2 text-xl">${cats.map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 mx-2">${t(p.FARMACEUTISCHEVORM)}</span>`;
             
-            document.getElementById('res-stof-container').innerHTML = (p.WERKZAMESTOFFEN||"").split('#').filter(s => s.trim() !== "").map(s => `<div class="benu-bg-green text-white border border-white/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-tight shadow-sm flex items-center gap-2"><i class="fa-solid fa-circle-check text-[10px] opacity-50"></i> ${s.trim()}</div>`).join('');
+            document.getElementById('res-stof-container').innerHTML = (p.WERKZAMESTOFFEN||"").split('#').filter(s => s.trim() !== "").map(s => `<div class="benu-bg-green text-white border border-white/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-tight shadow-sm flex items-center gap-2"><i class="fa-solid fa-circle-check text-[10px] opacity-50"></i> ${t(s.trim())}</div>`).join('');
 
             mainHulpstoffenArr = parseHulpstoffen(p.HULPSTOFFEN);
             document.getElementById('res-hulpstoffen').innerHTML = mainHulpstoffenArr.map(h => {
                 const isKritisch = kritischeStoffen.some(k => heeftAllergeen(h, k));
-                return `<span class="bg-white border ${isKritisch ? 'border-red-200 text-red-600 font-bold' : 'border-slate-200'} px-2 py-1 rounded-md shadow-sm">${formatHulpstof(h)}</span>`;
+                return `<span class="bg-white border ${isKritisch ? 'border-red-200 text-red-600 font-bold' : 'border-slate-200'} px-2 py-1 rounded-md shadow-sm">${t(formatHulpstof(h))}</span>`;
             }).join('') || 'No data';
             
             document.getElementById('link-smpc').href = p.SMPC_FILENAAM || "#";
@@ -636,7 +706,7 @@
                 }
                 document.getElementById('filter-vrijvan').innerHTML = actieveKritischeStoffen.map(k => `
                     <button onclick="toggleVrijVan('${k}');renderAlts()" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase border transition-all ${currentVrijVan.includes(k) ? 'bg-red-500 text-white border-red-500 shadow-md':'bg-white text-slate-500 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}">
-                        <i class="fa-solid ${currentVrijVan.includes(k) ? 'fa-ban' : 'fa-triangle-exclamation'} mr-1"></i> ${k}
+                        <i class="fa-solid ${currentVrijVan.includes(k) ? 'fa-ban' : 'fa-triangle-exclamation'} mr-1"></i> ${t(k)}
                     </button>`).join('');
             } else {
                 if (vrijVanContainer) {
@@ -676,11 +746,11 @@
                 let diffHTML = '';
                 if (a.extra.length > 0) {
                     diffHTML += `<div class="flex flex-wrap gap-1 mt-2 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Extra:</span>` + 
-                        a.extra.map(e => `<span class="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[9px] ${kritischeStoffen.some(k => heeftAllergeen(e, k)) ? 'ring-1 ring-red-400 font-bold' : ''}">+ ${formatHulpstof(e)}</span>`).join('') + `</div>`;
+                        a.extra.map(e => `<span class="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[9px] ${kritischeStoffen.some(k => heeftAllergeen(e, k)) ? 'ring-1 ring-red-400 font-bold' : ''}">+ ${t(formatHulpstof(e))}</span>`).join('') + `</div>`;
                 }
                 if (a.mist.length > 0) {
                     diffHTML += `<div class="flex flex-wrap gap-1 mt-1 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Less:</span>` + 
-                        a.mist.map(m => `<span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-400 text-[9px] line-through">- ${formatHulpstof(m)}</span>`).join('') + `</div>`;
+                        a.mist.map(m => `<span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-400 text-[9px] line-through">- ${t(formatHulpstof(m))}</span>`).join('') + `</div>`;
                 }
 
                 return `
@@ -689,8 +759,8 @@
                         <div class="flex items-center gap-4 min-w-0">
                             <div class="flex gap-1 text-slate-400 group-hover:text-[#84ad41] text-xl">${getCats(a.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
                             <div class="flex flex-col min-w-0">
-                                <span class="font-bold text-slate-700 group-hover:text-[#6f8b34] truncate text-sm">${a.PRODUCTNAAM}</span>
-                                <span class="text-[9px] text-slate-400 uppercase truncate">${a.HANDELSVERGUNNINGHOUDER}</span>
+                                <span class="font-bold text-slate-700 group-hover:text-[#6f8b34] truncate text-sm">${t(a.PRODUCTNAAM)}</span>
+                                <span class="text-[9px] text-slate-400 uppercase truncate">${t(a.HANDELSVERGUNNINGHOUDER)}</span>
                             </div>
                         </div>
                         <span class="text-xs font-mono text-slate-300 group-hover:text-slate-500 shrink-0 ml-4">RVG ${a.REGISTRATIENUMMER}</span>
@@ -750,8 +820,8 @@
             }
 
             let buttons = [];
-            substanceMatches.forEach(s => buttons.push(`<button onclick="doSearchStof('${s.replace(/'/g, "\\'")}'); hideSearchFeedback();" class="text-[11px] bg-white text-blue-700 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-capsules text-blue-400"></i> Substance: ${s}</button>`));
-            productMatches.forEach(p => buttons.push(`<button onclick="doSearchIndex(${database.indexOf(p)}); hideSearchFeedback();" class="text-[11px] bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-pills text-emerald-400"></i> Product: ${p.PRODUCTNAAM}</button>`));
+            substanceMatches.forEach(s => buttons.push(`<button onclick="doSearchStof('${s.replace(/'/g, "\\'")}'); hideSearchFeedback();" class="text-[11px] bg-white text-blue-700 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-capsules text-blue-400"></i> Substance: ${t(s)}</button>`));
+            productMatches.forEach(p => buttons.push(`<button onclick="doSearchIndex(${database.indexOf(p)}); hideSearchFeedback();" class="text-[11px] bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-pills text-emerald-400"></i> Product: ${t(p.PRODUCTNAAM)}</button>`));
 
             showSearchFeedback(`
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -790,7 +860,7 @@
                     <div class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#ecf4d1] group-hover:text-[#84ad41] transition-colors shadow-sm">
                         <i class="fa-solid fa-capsules text-xl"></i>
                     </div>
-                    <span class="text-[11px] font-black text-slate-500 group-hover:text-[#6f8b34] text-center uppercase tracking-wider">${stof}</span>
+                    <span class="text-[11px] font-black text-slate-500 group-hover:text-[#6f8b34] text-center uppercase tracking-wider">${t(stof)}</span>
                 </button>
             `).join('');
         }
@@ -815,7 +885,7 @@
         function renderSettingsList() {
             document.getElementById('settings-tile-list').innerHTML = populaireStoffen.map((stof, index) => `
                 <div class="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-xl hover:border-slate-300 transition-colors">
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">${stof}</span>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">${t(stof)}</span>
                     <button onclick="removeTile(${index})" class="text-red-300 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center transition-all"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `).join('');
@@ -841,7 +911,7 @@
             const matches = uniekeSubstanties.filter(s => s.includes(val)).slice(0, 10);
             if (matches.length) {
                 suggestions.innerHTML = matches.map(s => `
-                    <div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-xs font-bold text-slate-600 transition-colors" onclick="selectTileSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>
+                    <div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-xs font-bold text-slate-600 transition-colors" onclick="selectTileSuggestion('${s.replace(/'/g, "\\'")}')">${t(s)}</div>
                 `).join('');
                 suggestions.classList.remove('hidden');
             } else {
