@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Reference - BENU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; }
+        .benu-blue { color: #2b3a7b; }
+        .benu-bg-blue { background-color: #2b3a7b; }
+        .benu-green { color: #84ad41; }
+        .benu-bg-green { background-color: #84ad41; }
+        .benu-border-green { border-color: #84ad41; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="border-b border-gray-100 p-4 bg-white sticky top-0 z-[100] shadow-sm">
+        <div class="w-[95%] md:w-[90%] max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-bold benu-blue tracking-tight hidden sm:block">Quick Reference</h1>
+            </div>
+            
+            <div id="status-badge" onclick="openUploadModal()" class="cursor-pointer hover:bg-slate-100 transition-colors text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex items-center gap-2 shadow-sm" title="Manage database (Click to upload)">
+                <i id="status-icon" class="fa-solid fa-circle-notch animate-spin"></i> <span id="status-text">Loading...</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="w-[95%] md:w-[90%] max-w-[1600px] mx-auto p-4 sm:p-6 mt-4">
+        
+        <div class="mb-10 relative">
+            <div class="relative shadow-xl rounded-3xl bg-white border border-slate-200 flex items-center z-50">
+                <input type="text" id="searchInput" autocomplete="off" placeholder="Search by brand name, RVG, or substance..." class="w-full pl-6 pr-40 py-6 outline-none text-lg focus:bg-slate-50 transition-colors rounded-3xl">
+                <button id="searchBtn" class="absolute right-2 top-2 bottom-2 benu-bg-blue text-white px-10 rounded-2xl font-bold uppercase tracking-widest hover:bg-blue-900 transition-colors shadow-md">SEARCH</button>
+            </div>
+            
+            <!-- "Bedoelde u misschien?" Feedback Box -->
+            <div id="search-feedback" class="hidden mt-3 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-2"></div>
+            
+            <div id="search-suggestions" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-40 hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 max-h-[500px]">
+                <div class="flex-1 flex flex-col overflow-hidden bg-white">
+                    <div class="px-5 py-3 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Products</div>
+                    <div id="suggest-products" class="overflow-y-auto custom-scrollbar flex-1"></div>
+                </div>
+                <div class="flex-1 flex flex-col overflow-hidden bg-white">
+                    <div class="px-5 py-3 bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Substances / ATC</div>
+                    <div id="suggest-substances" class="overflow-y-auto custom-scrollbar flex-1"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-screen" class="mt-12 relative">
+            <div class="flex justify-center items-center gap-3 mb-6 relative">
+                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center m-0">Active substances</h3>
+                <button onclick="openSettings()" class="text-[#2b3a7b] bg-blue-50 hover:bg-[#2b3a7b] hover:text-white transition-colors w-6 h-6 rounded-full flex items-center justify-center shadow-sm" title="Customize tiles">
+                    <i class="fa-solid fa-gear text-[10px]"></i>
+                </button>
+            </div>
+            <div id="popular-tiles" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
+        </div>
+
+        <div id="result-container" class="hidden">
+            <button onclick="resetSearch()" class="mb-6 text-[11px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Back to overview
+            </button>
+
+            <div class="bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden">
+                <div class="benu-bg-blue p-6 sm:p-8 text-white relative">
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 relative z-10">
+                        <h2 id="res-naam" class="text-2xl sm:text-3xl font-black uppercase tracking-tight flex-1">Product name</h2>
+                        <div class="text-left sm:text-right shrink-0">
+                            <span id="res-rvg" class="block text-[10px] font-bold opacity-60 mb-1 uppercase tracking-widest">RVG -</span>
+                            <button id="res-atc-btn" class="bg-white/10 hover:bg-white/20 rounded-lg px-3 py-1 border border-white/20 inline-flex items-center gap-2 shadow-sm transition-all group">
+                                <span id="res-atc-badge" class="text-[10px] font-bold uppercase">ATC: -</span>
+                                <i class="fa-solid fa-magnifying-glass text-[10px] opacity-50"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="res-stof-container" class="flex flex-wrap gap-2 mt-6 relative z-10"></div>
+                </div>
+
+                <div class="p-6 sm:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 text-sm">
+                        <div class="border-l-4 border-blue-400 pl-4 bg-slate-50/50 p-4 rounded-r-xl flex flex-col justify-center">
+                            <span class="text-[9px] font-bold text-slate-400 block mb-1 uppercase tracking-widest">Dosage form</span>
+                            <div id="res-vorm-container" class="flex items-center gap-3 font-bold text-slate-700"></div>
+                        </div>
+                        <div class="border-l-4 border-slate-300 pl-4 bg-slate-50/50 p-4 rounded-r-xl min-w-0">
+                            <span class="text-[9px] font-bold text-slate-400 block mb-1 uppercase tracking-widest">ATC Group</span>
+                            <p id="res-atc-full" class="font-bold text-slate-700 truncate">-</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+                        <a id="link-smpc" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3.5 bg-white rounded-xl text-[10px] font-bold benu-blue uppercase border border-slate-200 shadow-sm hover:bg-blue-50 transition-all"><i class="fa-solid fa-file-pdf text-red-500 text-lg"></i> SmPC</a>
+                        <a id="link-bijsluiter" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3.5 bg-white rounded-xl text-[10px] font-bold benu-blue uppercase border border-slate-200 shadow-sm hover:bg-[#ecf4d1] transition-all"><i class="fa-solid fa-file-medical text-emerald-500 text-lg"></i> Package Leaflet</a>
+                        <a id="link-gib" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3.5 bg-[#007bc7] rounded-xl text-[10px] font-bold text-white uppercase shadow-lg hover:bg-blue-700 transition-all"><i class="fa-solid fa-arrow-up-right-from-square text-lg"></i> GIB Dossier</a>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 sm:p-7 rounded-[28px] border border-slate-200">
+                        <h4 class="text-[11px] font-black benu-blue uppercase tracking-widest mb-4 flex items-center gap-2"><i class="fa-solid fa-flask-vial"></i> Excipients Main Product</h4>
+                        <div id="res-hulpstoffen" class="flex flex-wrap gap-2 italic text-xs mb-8 text-slate-500 leading-relaxed"></div>
+                        
+                        <div id="res-alternatieven-sectie" class="hidden border-t border-slate-200 pt-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="flex items-center gap-3">
+                                    <h4 class="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-filter"></i> Filters</h4>
+                                    <span id="alt-counter" class="bg-[#ecf4d1] text-[#6f8b34] px-2 py-0.5 rounded-md text-[9px] font-bold tracking-widest uppercase border border-[#84ad41]/30"></span>
+                                </div>
+                                <button onclick="resetFilters()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 border border-slate-200 hover:border-red-200 bg-white px-3 py-1.5 rounded-lg uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm"><i class="fa-solid fa-rotate-left"></i> Reset All</button>
+                            </div>
+                            <div class="space-y-5 mb-8">
+                                <div class="flex items-start gap-4"><span class="text-[9px] font-bold text-slate-400 w-16 pt-2 uppercase">Form:</span><div id="filter-vorm" class="flex flex-wrap gap-2"></div></div>
+                                <div class="flex items-start gap-4 border-t border-slate-100 pt-4"><span class="text-[9px] font-bold text-slate-400 w-16 pt-2 uppercase">Strength:</span><div id="filter-sterkte" class="flex flex-wrap gap-2"></div></div>
+                                <div id="filter-vrijvan-container" class="hidden items-start gap-4 border-t border-slate-100 pt-4"><span class="text-[9px] font-bold text-slate-400 w-16 pt-2 uppercase">Free of:</span><div id="filter-vrijvan" class="flex flex-wrap gap-2"></div></div>
+                            </div>
+                            <div id="alternatieven-list" class="grid grid-cols-1 gap-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs"><i class="fa-solid fa-gear text-slate-400 mr-2"></i> Customize Tiles</h3>
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-700 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto flex-1 custom-scrollbar">
+                <div class="flex gap-2 mb-4">
+                    <div class="flex-1 relative">
+                        <input type="text" id="new-tile-input" autocomplete="off" onkeypress="if(event.key === 'Enter') addTile()" placeholder="Add substance or ATC..." class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all">
+                        <div id="tile-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-50"></div>
+                    </div>
+                    <button onclick="addTile()" class="benu-bg-blue text-white px-5 rounded-xl hover:bg-blue-900 transition-colors text-sm font-bold shadow-md"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div id="settings-tile-list" class="space-y-2"></div>
+            </div>
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="closeSettings()" class="bg-white border border-slate-200 text-slate-700 px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verborgen file input voor het lokaal inladen van de CSV -->
+    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+
+    <script>
+        let database = [];
+        let alternatievenData = [];
+        let uniekeSubstanties = [];
+        let currentVorm = 'alle';
+        let currentSterkte = 'alle';
+        let currentVrijVan = [];
+        let mainHulpstoffenArr = [];
+        const defaultPopulaireStoffen = ["PARACETAMOL", "OMEPRAZOL", "IBUPROFEN", "METOPROLOL", "PANTOPRAZOL"];
+        
+        let populaireStoffen = defaultPopulaireStoffen;
+        try {
+            const stored = localStorage.getItem('benu_tiles');
+            if (stored) populaireStoffen = JSON.parse(stored) || defaultPopulaireStoffen;
+        } catch(e) { console.error("Instellingen laden mislukt:", e); }
+
+        const kritischeStoffen = ["LACTOSE", "SOJA", "PINDA", "GLUTEN", "ASPARTAAM", "SACCHAROSE", "VARKEN", "GELATINE"];
+
+        function heeftAllergeen(hulpstof, allergeen) {
+            return hulpstof.includes(allergeen);
+        }
+
+        const eNummers = {
+            "TITANIUMDIOXIDE": "E171",
+            "TITAANDIOXIDE": "E171",
+            "RODE IJZEROXIDE": "E172",
+            "GELE IJZEROXIDE": "E172",
+            "ZWARTE IJZEROXIDE": "E172",
+            "IJZEROXIDE ROOD": "E172",
+            "IJZEROXIDE GEEL": "E172",
+            "IJZEROXIDE ZWART": "E172",
+            "IJZEROXIDE": "E172",
+            "MACROGOL 3350": "E1521",
+            "MACROGOL 4000": "E1521",
+            "MACROGOL 6000": "E1521",
+            "MACROGOL 400": "E1521",
+            "MACROGOL": "E1521",
+            "MICROKRISTALLIJNE CELLULOSE": "E460",
+            "CELLULOSE, MICROKRISTALLIJN": "E460",
+            "POEDERCELLULOSE": "E460",
+            "HYPROMELLOSE": "E464",
+            "HYDROXYPROPYLMETHYLCELLULOSE": "E464",
+            "MAGNESIUMSTEARAAT": "E470b",
+            "SILICIUMDIOXIDE": "E551",
+            "COLLOÏDAAL SILICIUMDIOXIDE": "E551",
+            "COLLOIDAAL SILICIUMDIOXIDE": "E551",
+            "CROSPOVIDON": "E1202",
+            "POVIDON": "E1201",
+            "POLYVINYLPYRROLIDON": "E1201",
+            "TALK": "E553b",
+            "CITROENZUUR": "E330",
+            "CITROENZUURMONOHYDRAAT": "E330",
+            "ASCORBINEZUUR": "E300",
+            "NATRIUMBENZOAAT": "E211",
+            "KALIUMSORBAAT": "E202",
+            "GLYCEROL": "E422",
+            "ASPARTAAM": "E951",
+            "SACCHARINE": "E954",
+            "SACCHARINENATRIUM": "E954",
+            "NATRIUMSACCHARINE": "E954",
+            "XANTHAANGOM": "E415",
+            "CARMELLOSE": "E466",
+            "CARMELLOSENATRIUM": "E466",
+            "NATRIUMCARMELLOSE": "E466",
+            "CROSCARMELLOSENATRIUM": "E468",
+            "NATRIUMCROSCARMELLOSE": "E468",
+            "NATRIUMALGINAAT": "E401",
+            "ERYTHROSINE": "E127",
+            "INDIGOKARMIJN": "E132",
+            "ZONNEGEEL FCF": "E110",
+            "TARTRAZINE": "E102",
+            "ALLURA ROOD AC": "E129",
+            "COCHENILLEROOD A": "E124",
+            "AZORUBINE": "E122",
+            "AMARANT": "E123",
+            "BRILJANTBLAUW FCF": "E133",
+            "MANNITOL": "E421",
+            "XYLITOL": "E967",
+            "SORBITOL": "E420",
+            "MALTITOL": "E965",
+            "ISOMALT": "E953",
+            "LACTITOL": "E966",
+            "SUCRALOSE": "E955",
+            "ACESULFAAM-K": "E950",
+            "NATRIUMCYCLAMAAT": "E952",
+            "CALCIUMCARBONAAT": "E170",
+            "NATRIUMWATERSTOFCARBONAAT": "E500",
+            "NATRIUMCARBONAAT": "E500"
+        };
+
+        const sortedENummerKeys = Object.keys(eNummers).sort((a, b) => b.length - a.length);
+
+        function formatHulpstof(naam) {
+            let n = naam.trim().replace(/\s{2,}/g, ' ');
+            
+            n = n.replace(/(VITAMINE\s+)?\bE\s*-?\s*(\d{3,4}[a-zA-Z]?)\b/gi, (match, vit, p2) => {
+                if (vit) return match; 
+                return 'E ' + p2;
+            });
+            
+            if (/\bE\s\d{3,4}[a-zA-Z]?\b/i.test(n)) return n;
+            
+            for (let key of sortedENummerKeys) {
+                if (n.includes(key)) {
+                    const eNumFormatted = eNummers[key].replace('E', 'E ');
+                    return n + " (" + eNumFormatted + ")";
+                }
+            }
+            return n;
+        }
+
+        const metadata = {
+            'tablet': { i: '<i class="fa-solid fa-tablets"></i>', l: 'Tablet/Pill' },
+            'capsule': { i: '<i class="fa-solid fa-capsules text-emerald-500"></i>', l: 'Capsule' },
+            'injectie': { i: '<i class="fa-solid fa-syringe text-sky-500"></i>', l: 'Injection' },
+            'spray': { i: '<i class="fa-solid fa-spray-can text-sky-400"></i>', l: 'Spray' },
+            'oog': { i: '<i class="fa-solid fa-eye text-cyan-500"></i>', l: 'Eye' },
+            'oor': { i: '<i class="fa-solid fa-ear-listen text-orange-400"></i>', l: 'Ear' },
+            'vloeibaar': { i: '<i class="fa-solid fa-bottle-droplet text-blue-400"></i>', l: 'Liquid/Oral' },
+            'cutaan': { i: '<i class="fa-solid fa-hand-holding-droplet text-amber-500"></i>', l: 'Skin/Cutaneous' },
+            'inhalatie': { i: '<i class="fa-solid fa-lungs text-teal-500"></i>', l: 'Inhalation' },
+            'neus': { i: '<i class="fa-solid fa-bottle-droplet text-indigo-400"></i>', l: 'Nasal' },
+            'vaginaal': { i: '<i class="fa-solid fa-venus text-pink-500"></i>', l: 'Vaginal' },
+            'rectaal': { i: '<i class="fa-solid fa-pills text-purple-400"></i>', l: 'Suppository/Rectal' },
+            'poeder': { i: '<i class="fa-solid fa-mortar-pestle text-amber-700"></i>', l: 'Powder' },
+            'onbekend': { i: '<i class="fa-solid fa-pills text-slate-400"></i>', l: 'Other' }
+        };
+
+        function getCats(text) {
+            if (!text) return ['onbekend'];
+            const v = text.toLowerCase();
+            let c = [];
+            if (/(zetpil|rectaal|klysma|suppositorium)/.test(v)) return ['rectaal']; 
+            if (/(injectie|infusie|spuit|parenteraal)/.test(v)) c.push('injectie');
+            if (/\b(oog|ogen|oculair)\b/.test(v)) c.push('oog');
+            if (/\b(oor|oren|auriculair)\b/.test(v)) c.push('oor');
+            if (/spray/.test(v)) c.push('spray');
+            if (/\b(neus|nasaal)\b/.test(v)) c.push('neus');
+            if (/(vaginaal|ovule)/.test(v)) c.push('vaginaal');
+            if (/(inhalatie|aerosol|vernevel)/.test(v)) c.push('inhalatie');
+            if (/(zalf|crème|creme|gel|pasta|cutaan|shampoo|lotion)/.test(v) && c.length === 0) c.push('cutaan');
+            if (/\b(tablet|tabl|dragee|kauwtablet|pastille)\b/.test(v) || (/\b(pil)\b/.test(v) && !v.includes('zet'))) c.push('tablet');
+            if (/capsule/.test(v)) c.push('capsule');
+            if (/(poeder|granulaat)/.test(v)) c.push('poeder');
+            if ((/(drank|siroop|oplossing|suspensie|druppel)/.test(v)) && c.length === 0) c.push('vloeibaar');
+            return c.length ? c : ['onbekend'];
+        }
+
+        function getSterkte(n) {
+            const m = (n||"").match(/\b\d+(?:[.,]\d+)?\s*(?:mg|g|ml|mcg|ie|%|microgram)\b/i);
+            return m ? m[0].toLowerCase() : 'Other';
+        }
+
+        function parseHulpstoffen(str) {
+            if (!str || str === "-") return [];
+            return str.split('#').map(s => s.trim().toUpperCase()).filter(s => s !== "");
+        }
+
+        // --- URL CONFIGURATIE ---
+        const CSV_WEB_URL = "metadata.csv"; 
+        let attemptUrl = true;
+
+        function openUploadModal() {
+            if (CSV_WEB_URL && attemptUrl && database.length === 0) {
+                // De eerste klik probeert de URL / het lokale bestand op te halen
+                loadDataFromURL(CSV_WEB_URL);
+            } else {
+                // Opent de lokale bestandsverkenner als data al geladen is, of URL ontbreekt
+                document.getElementById('csvFileInput').click();
+            }
+        }
+
+        async function loadDataFromURL(url) {
+            document.getElementById('status-text').textContent = "Loading...";
+            document.getElementById('status-icon').className = "fa-solid fa-circle-notch animate-spin text-slate-400";
+
+            try {
+                const cacheName = 'csv-data-cache';
+                const cacheTimeKey = 'csv_cache_timestamp';
+                const ONE_WEEK = 7 * 24 * 60 * 60 * 1000; 
+                
+                const lastFetch = localStorage.getItem(cacheTimeKey);
+                const isCacheValid = lastFetch && (Date.now() - parseInt(lastFetch)) < ONE_WEEK;
+
+                let csvText = '';
+                const cache = await caches.open(cacheName);
+                let cachedResponse = isCacheValid ? await cache.match(url) : null;
+
+                if (cachedResponse) {
+                    document.getElementById('status-text').textContent = "Loading from cache...";
+                    csvText = await cachedResponse.text();
+                } else {
+                    document.getElementById('status-text').textContent = "Connecting...";
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Netwerk response was niet ok");
+                    
+                    cache.put(url, response.clone());
+                    localStorage.setItem(cacheTimeKey, Date.now().toString());
+                    
+                    // Stream uitlezen om download voortgang te tonen
+                    const reader = response.body.getReader();
+                    const contentLength = +response.headers.get('Content-Length');
+                    let receivedLength = 0;
+                    let chunks = [];
+                    
+                    while (true) {
+                        const {done, value} = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        receivedLength += value.length;
+                        
+                        let mb = (receivedLength / (1024 * 1024)).toFixed(1);
+                        if (contentLength) {
+                            let percent = Math.round((receivedLength / contentLength) * 100);
+                            document.getElementById('status-text').textContent = `Downloading... ${percent}%`;
+                        } else {
+                            document.getElementById('status-text').textContent = `Downloading... ${mb} MB`;
+                        }
+                    }
+                    
+                    document.getElementById('status-text').textContent = "Processing text...";
+                    
+                    // Stukjes data samenvoegen tot 1 lange tekst
+                    let chunksAll = new Uint8Array(receivedLength);
+                    let position = 0;
+                    for (let chunk of chunks) {
+                        chunksAll.set(chunk, position);
+                        position += chunk.length;
+                    }
+                    csvText = new TextDecoder("utf-8").decode(chunksAll);
+                }
+
+                document.getElementById('status-text').textContent = "Parsing CSV...";
+
+                Papa.parse(csvText, {
+                    header: true, delimiter: "|", skipEmptyLines: true,
+                    complete: (results) => {
+                        database = results.data;
+                        const terms = new Set();
+                        database.forEach(item => {
+                            if(item.WERKZAMESTOFFEN && item.WERKZAMESTOFFEN !== "-") terms.add(item.WERKZAMESTOFFEN.toUpperCase().trim());
+                            if(item.ATC && item.ATC.includes('-')) terms.add(item.ATC.split('-')[1].toUpperCase().trim());
+                        });
+                        uniekeSubstanties = Array.from(terms);
+                        document.getElementById('status-text').textContent = database.length + " PRODUCTS LOADED";
+                        document.getElementById('status-icon').className = "fa-solid fa-check-circle text-emerald-500 animate-none";
+                    },
+                    error: (err) => {
+                        throw new Error(err);
+                    }
+                });
+
+            } catch (err) {
+                console.error("Fetch of Parse Fout:", err);
+                document.getElementById('status-text').textContent = "Choose CSV File";
+                document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
+                attemptUrl = false; // Volgende klik opent direct de verkenner
+                document.getElementById('csvFileInput').click(); // Automatische fallback naar lokaal bestand
+            }
+        }
+
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('status-text').textContent = "Loading...";
+            document.getElementById('status-icon').className = "fa-solid fa-circle-notch animate-spin text-slate-400";
+
+            Papa.parse(file, {
+                header: true, delimiter: "|", skipEmptyLines: true,
+                complete: (results) => {
+                    database = results.data;
+                    const terms = new Set();
+                    database.forEach(item => {
+                        if(item.WERKZAMESTOFFEN && item.WERKZAMESTOFFEN !== "-") terms.add(item.WERKZAMESTOFFEN.toUpperCase().trim());
+                        if(item.ATC && item.ATC.includes('-')) terms.add(item.ATC.split('-')[1].toUpperCase().trim());
+                    });
+                    uniekeSubstanties = Array.from(terms);
+                    document.getElementById('status-text').textContent = database.length + " PRODUCTS LOADED";
+                    document.getElementById('status-icon').className = "fa-solid fa-check-circle text-emerald-500 animate-none";
+                },
+                error: () => {
+                    document.getElementById('status-text').textContent = "LOADING FAILED";
+                    document.getElementById('status-icon').className = "fa-solid fa-triangle-exclamation text-red-500 animate-pulse";
+                }
+            });
+        });
+
+        // --- ZOEK LOGICA (MEERDERE WOORDEN & TYPO'S) ---
+        function levenshtein(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            let matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        function isFlexibleMatch(query, target) {
+            if (!query || !target) return false;
+            if (target.includes(query)) return true; // Directe volledige match
+
+            const qWords = query.split(/\s+/);
+            const tWords = target.split(/[\s,]+/);
+
+            return qWords.every(qw => {
+                if (tWords.some(tw => tw.includes(qw))) return true; 
+                if (qw.length > 2) {
+                    const maxEdits = qw.length <= 4 ? 1 : (qw.length <= 7 ? 2 : 3);
+                    return tWords.some(tw => {
+                        if (Math.abs(tw.length - qw.length) > maxEdits + 1) return false;
+                        return levenshtein(qw, tw) <= maxEdits;
+                    });
+                }
+                return false;
+            });
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsPanel = document.getElementById('search-suggestions');
+
+        function executeLiveSearch() {
+            const val = searchInput.value.trim().toUpperCase();
+            if (val.length < 2) { suggestionsPanel.classList.add('hidden'); return; }
+            
+            const productMatches = database.filter(i => isFlexibleMatch(val, (i.PRODUCTNAAM||"").toUpperCase()) || (i.REGISTRATIENUMMER||"").includes(val)).slice(0, 15);
+            const substanceMatches = uniekeSubstanties.filter(s => isFlexibleMatch(val, s)).slice(0, 10);
+
+            if (productMatches.length || substanceMatches.length) {
+                document.getElementById('suggest-products').innerHTML = productMatches.map(m => `
+                    <div class="px-5 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchIndex(${database.indexOf(m)})">
+                        <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${m.PRODUCTNAAM}</div><div class="text-[10px] text-slate-400 font-mono">RVG ${m.REGISTRATIENUMMER}</div></div>
+                        <div class="text-slate-300 group-hover:text-blue-200 text-xs">${getCats(m.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
+                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No products</div>';
+
+                document.getElementById('suggest-substances').innerHTML = substanceMatches.map(s => `
+                    <div class="px-5 py-3 hover:bg-[#ecf4d1] cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchStof('${s}')">
+                        <div class="font-bold text-slate-700 text-sm truncate group-hover:text-[#6f8b34]">${s}</div>
+                    </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">No substances</div>';
+
+                suggestionsPanel.classList.remove('hidden');
+            } else {
+                suggestionsPanel.classList.add('hidden');
+            }
+        }
+
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+            hideSearchFeedback();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(executeLiveSearch, 200);
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length >= 2) executeLiveSearch();
+        });
+
+        window.doSearch = function(rvg) { finalizeSearch(database.find(i => String(i.REGISTRATIENUMMER) === String(rvg))); };
+        window.doSearchStof = function(stof) { finalizeSearch(database.find(i => (i.WERKZAMESTOFFEN||'').toUpperCase() === stof || (i.ATC||'').toUpperCase().includes(stof))); };
+        window.doSearchIndex = function(idx) { finalizeSearch(database[idx]); };
+
+        function finalizeSearch(p) {
+            if (!p) return;
+            searchInput.value = p.PRODUCTNAAM;
+            suggestionsPanel.classList.add('hidden');
+            
+            document.getElementById('res-naam').textContent = p.PRODUCTNAAM;
+            document.getElementById('res-rvg').textContent = "RVG " + p.REGISTRATIENUMMER;
+            
+            const atcCode = p.ATC && p.ATC !== "-" ? p.ATC.split(' ')[0] : null;
+            document.getElementById('res-atc-badge').textContent = "ATC: " + (atcCode || "-");
+            document.getElementById('res-atc-full').textContent = p.ATC || "-";
+            
+            document.getElementById('res-atc-btn').onclick = () => {
+                if (!atcCode) return;
+                alternatievenData = database.filter(i => {
+                    const iAtc = i.ATC && i.ATC !== "-" ? i.ATC.split(' ')[0] : null;
+                    return iAtc && iAtc.startsWith(atcCode);
+                });
+                currentVorm = 'alle'; currentSterkte = 'alle'; currentVrijVan = [];
+                renderAlts();
+            };
+            
+            const cats = getCats(p.FARMACEUTISCHEVORM);
+            document.getElementById('res-vorm-container').innerHTML = `<div class="flex gap-2 text-xl">${cats.map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 mx-2">${p.FARMACEUTISCHEVORM}</span>`;
+            
+            document.getElementById('res-stof-container').innerHTML = (p.WERKZAMESTOFFEN||"").split('#').filter(s => s.trim() !== "").map(s => `<div class="benu-bg-green text-white border border-white/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-tight shadow-sm flex items-center gap-2"><i class="fa-solid fa-circle-check text-[10px] opacity-50"></i> ${s.trim()}</div>`).join('');
+
+            mainHulpstoffenArr = parseHulpstoffen(p.HULPSTOFFEN);
+            document.getElementById('res-hulpstoffen').innerHTML = mainHulpstoffenArr.map(h => {
+                const isKritisch = kritischeStoffen.some(k => heeftAllergeen(h, k));
+                return `<span class="bg-white border ${isKritisch ? 'border-red-200 text-red-600 font-bold' : 'border-slate-200'} px-2 py-1 rounded-md shadow-sm">${formatHulpstof(h)}</span>`;
+            }).join('') || 'No data';
+            
+            document.getElementById('link-smpc').href = p.SMPC_FILENAAM || "#";
+            document.getElementById('link-bijsluiter').href = p.BIJSLUITER_FILENAAM || "#";
+            document.getElementById('link-gib').href = p.PRODUCTDETAIL_LINK || "#";
+
+            const pStof = p.WERKZAMESTOFFEN && p.WERKZAMESTOFFEN !== "-" ? p.WERKZAMESTOFFEN : null;
+            alternatievenData = database.filter(i => {
+                if (i === p) return false;
+                const iAtc = i.ATC && i.ATC !== "-" ? i.ATC.split(' ')[0] : null;
+                const matchAtc = atcCode && iAtc && iAtc.startsWith(atcCode);
+                const matchStof = pStof && i.WERKZAMESTOFFEN === pStof;
+                return matchAtc || matchStof;
+            });
+            
+            currentVorm = 'alle'; currentSterkte = 'alle'; currentVrijVan = [];
+            renderAlts();
+
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) startScreen.classList.add('hidden');
+
+            document.getElementById('result-container').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderAlts() {
+            const list = document.getElementById('alternatieven-list');
+            const sectie = document.getElementById('res-alternatieven-sectie');
+            if(!alternatievenData.length) { sectie.classList.add('hidden'); return; }
+            sectie.classList.remove('hidden');
+
+            const vormen = new Set(['alle']);
+            alternatievenData.forEach(a => getCats(a.FARMACEUTISCHEVORM).forEach(c => vormen.add(c)));
+            const subsetVorm = currentVorm === 'alle' ? alternatievenData : alternatievenData.filter(a => getCats(a.FARMACEUTISCHEVORM).includes(currentVorm));
+            const sterktes = new Set(['alle']);
+            subsetVorm.forEach(a => sterktes.add(getSterkte(a.PRODUCTNAAM)));
+
+            document.getElementById('filter-vorm').innerHTML = Array.from(vormen).map(v => {
+                const meta = metadata[v] || { i: '', l: v };
+                return `<button onclick="currentVorm='${v}';renderAlts()" class="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase border transition-all ${currentVorm===v ? 'bg-[#84ad41] text-white border-[#84ad41] shadow-md':'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}">
+                    ${v !== 'alle' ? meta.i : ''} ${v === 'alle' ? 'All Forms' : meta.l}
+                </button>`;
+            }).join('');
+
+            const sortedSterktes = Array.from(sterktes).sort((a, b) => {
+                if (a === 'alle') return -1;
+                if (b === 'alle') return 1;
+                if (a === 'Other') return 1;
+                if (b === 'Other') return -1;
+                const getVal = s => {
+                    const m = s.match(/[\d.,]+/);
+                    if (!m) return 0;
+                    let v = parseFloat(m[0].replace(',', '.'));
+                    if (s.includes('mcg') || s.includes('microgram')) v *= 0.001;
+                    else if (s.endsWith('g') && !s.includes('m')) v *= 1000;
+                    return v;
+                };
+                return getVal(a) - getVal(b);
+            });
+            
+            document.getElementById('filter-sterkte').innerHTML = sortedSterktes.map(s => `
+                <button onclick="currentSterkte='${s}';renderAlts()" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase border transition-all ${currentSterkte===s ? 'bg-[#84ad41] text-white border-[#84ad41] shadow-md':'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}">${s}</button>`).join('');
+
+            const subsetVoorVrijVan = subsetVorm.filter(a => currentSterkte === 'alle' || getSterkte(a.PRODUCTNAAM) === currentSterkte);
+            const actieveKritischeStoffen = kritischeStoffen.filter(k => {
+                if (currentVrijVan.includes(k)) return true;
+                return subsetVoorVrijVan.some(a => parseHulpstoffen(a.HULPSTOFFEN).some(h => heeftAllergeen(h, k)));
+            });
+
+            const vrijVanContainer = document.getElementById('filter-vrijvan-container');
+            if (actieveKritischeStoffen.length > 0) {
+                if (vrijVanContainer) {
+                    vrijVanContainer.classList.remove('hidden');
+                    vrijVanContainer.classList.add('flex');
+                }
+                document.getElementById('filter-vrijvan').innerHTML = actieveKritischeStoffen.map(k => `
+                    <button onclick="toggleVrijVan('${k}');renderAlts()" class="px-4 py-2 rounded-full text-[10px] font-bold uppercase border transition-all ${currentVrijVan.includes(k) ? 'bg-red-500 text-white border-red-500 shadow-md':'bg-white text-slate-500 border-slate-200 hover:bg-red-50 hover:text-red-500 hover:border-red-200'}">
+                        <i class="fa-solid ${currentVrijVan.includes(k) ? 'fa-ban' : 'fa-triangle-exclamation'} mr-1"></i> ${k}
+                    </button>`).join('');
+            } else {
+                if (vrijVanContainer) {
+                    vrijVanContainer.classList.add('hidden');
+                    vrijVanContainer.classList.remove('flex');
+                }
+            }
+
+            const filteredFinal = subsetVorm.filter(a => {
+                const matchSterkte = currentSterkte === 'alle' || getSterkte(a.PRODUCTNAAM) === currentSterkte;
+                if (!matchSterkte) return false;
+                
+                if (currentVrijVan.length > 0) {
+                    const hulpArr = parseHulpstoffen(a.HULPSTOFFEN);
+                    for (let kv of currentVrijVan) {
+                        if (hulpArr.some(h => heeftAllergeen(h, kv))) return false;
+                    }
+                }
+                return true;
+            });
+
+            const sortedFinal = filteredFinal.map(a => {
+                const altHulpArr = parseHulpstoffen(a.HULPSTOFFEN);
+                const extra = altHulpArr.filter(x => !mainHulpstoffenArr.includes(x));
+                const mist = mainHulpstoffenArr.filter(x => !altHulpArr.includes(x));
+                return { ...a, originalIndex: database.indexOf(a), diffCount: extra.length + mist.length, extra, mist };
+            }).sort((a, b) => a.diffCount - b.diffCount);
+
+            document.getElementById('alt-counter').textContent = sortedFinal.length === 1 ? '1 alternative' : sortedFinal.length + ' alternatives';
+
+            if (sortedFinal.length === 0) {
+                list.innerHTML = `<div class="text-center p-8 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm font-medium">No alternatives found matching all filters. Try disabling a filter.</div>`;
+                return;
+            }
+
+            list.innerHTML = sortedFinal.map(a => {
+                let diffHTML = '';
+                if (a.extra.length > 0) {
+                    diffHTML += `<div class="flex flex-wrap gap-1 mt-2 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Extra:</span>` + 
+                        a.extra.map(e => `<span class="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[9px] ${kritischeStoffen.some(k => heeftAllergeen(e, k)) ? 'ring-1 ring-red-400 font-bold' : ''}">+ ${formatHulpstof(e)}</span>`).join('') + `</div>`;
+                }
+                if (a.mist.length > 0) {
+                    diffHTML += `<div class="flex flex-wrap gap-1 mt-1 items-center"><span class="text-[8px] font-black text-slate-400 mr-1 uppercase">Less:</span>` + 
+                        a.mist.map(m => `<span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-400 text-[9px] line-through">- ${formatHulpstof(m)}</span>`).join('') + `</div>`;
+                }
+
+                return `
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl hover:border-[#84ad41] hover:shadow-md transition-all group" onclick="doSearchIndex(${a.originalIndex})">
+                    <div class="flex justify-between items-center cursor-pointer">
+                        <div class="flex items-center gap-4 min-w-0">
+                            <div class="flex gap-1 text-slate-400 group-hover:text-[#84ad41] text-xl">${getCats(a.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="font-bold text-slate-700 group-hover:text-[#6f8b34] truncate text-sm">${a.PRODUCTNAAM}</span>
+                                <span class="text-[9px] text-slate-400 uppercase truncate">${a.HANDELSVERGUNNINGHOUDER}</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-mono text-slate-300 group-hover:text-slate-500 shrink-0 ml-4">RVG ${a.REGISTRATIENUMMER}</span>
+                    </div>
+                    <div class="border-t border-slate-50 mt-3 pt-2">
+                        ${a.diffCount === 0 ? '<span class="text-[9px] text-[#6f8b34] font-black uppercase flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> Identical excipients</span>' : diffHTML}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.toggleVrijVan = function(k) {
+            if (currentVrijVan.includes(k)) {
+                currentVrijVan = currentVrijVan.filter(item => item !== k);
+            } else {
+                currentVrijVan.push(k);
+            }
+        };
+
+        window.resetFilters = function() {
+            currentVorm = 'alle';
+            currentSterkte = 'alle';
+            currentVrijVan = [];
+            renderAlts();
+        };
+
+        function showSearchFeedback(html) {
+            const fb = document.getElementById('search-feedback');
+            fb.innerHTML = html;
+            fb.classList.remove('hidden');
+        }
+        function hideSearchFeedback() {
+            const fb = document.getElementById('search-feedback');
+            if(fb) fb.classList.add('hidden');
+        }
+
+        function handleSearchAction() {
+            const val = searchInput.value.trim();
+            if (!val) return;
+            
+            hideSearchFeedback();
+            suggestionsPanel.classList.add('hidden'); 
+            const query = val.toUpperCase();
+
+            const exactProduct = database.find(i => String(i.REGISTRATIENUMMER) === query || (i.PRODUCTNAAM || "").toUpperCase() === query);
+            if (exactProduct) return finalizeSearch(exactProduct);
+
+            const exactStof = uniekeSubstanties.find(s => s === query);
+            if (exactStof) return window.doSearchStof(exactStof);
+
+            const productMatches = database.filter(i => isFlexibleMatch(query, (i.PRODUCTNAAM||"").toUpperCase())).slice(0, 3);
+            const substanceMatches = uniekeSubstanties.filter(s => isFlexibleMatch(query, s)).slice(0, 3);
+
+            if (productMatches.length === 0 && substanceMatches.length === 0) {
+                showSearchFeedback(`<div class="text-red-500 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-exclamation"></i> No results found for "${val}". Check the spelling.</div>`);
+                return;
+            }
+
+            let buttons = [];
+            substanceMatches.forEach(s => buttons.push(`<button onclick="doSearchStof('${s.replace(/'/g, "\\'")}'); hideSearchFeedback();" class="text-[11px] bg-white text-blue-700 border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-capsules text-blue-400"></i> Substance: ${s}</button>`));
+            productMatches.forEach(p => buttons.push(`<button onclick="doSearchIndex(${database.indexOf(p)}); hideSearchFeedback();" class="text-[11px] bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-50 transition-colors font-bold shadow-sm flex items-center gap-2"><i class="fa-solid fa-pills text-emerald-400"></i> Product: ${p.PRODUCTNAAM}</button>`));
+
+            showSearchFeedback(`
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <span class="text-slate-600 font-bold flex items-center gap-2 shrink-0 text-sm"><i class="fa-solid fa-circle-question text-blue-500 text-lg"></i> Did you mean:</span>
+                    <div class="flex flex-wrap gap-2">${buttons.slice(0, 4).join('')}</div>
+                </div>
+            `);
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', handleSearchAction);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); handleSearchAction(); }
+        });
+
+        window.resetSearch = function() {
+            searchInput.value = '';
+            hideSearchFeedback();
+            document.getElementById('result-container').classList.add('hidden');
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) startScreen.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        document.addEventListener('click', e => { 
+            if(!searchInput.contains(e.target)) suggestionsPanel.classList.add('hidden'); 
+            const tileInput = document.getElementById('new-tile-input');
+            const tileSuggestions = document.getElementById('tile-suggestions');
+            if(tileInput && tileSuggestions && !tileInput.contains(e.target) && !tileSuggestions.contains(e.target)) {
+                tileSuggestions.classList.add('hidden');
+            }
+        });
+
+        function renderPopularTiles() {
+            document.getElementById('popular-tiles').innerHTML = populaireStoffen.map(stof => `
+                <button onclick="doSearchStof('${stof}')" class="bg-white border border-slate-200 hover:border-[#84ad41] hover:shadow-lg transition-all p-4 rounded-3xl flex flex-col items-center justify-center gap-3 group">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-[#ecf4d1] group-hover:text-[#84ad41] transition-colors shadow-sm">
+                        <i class="fa-solid fa-capsules text-xl"></i>
+                    </div>
+                    <span class="text-[11px] font-black text-slate-500 group-hover:text-[#6f8b34] text-center uppercase tracking-wider">${stof}</span>
+                </button>
+            `).join('');
+        }
+
+        function saveTiles() {
+            localStorage.setItem('benu_tiles', JSON.stringify(populaireStoffen));
+            renderPopularTiles();
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            renderSettingsList();
+            setTimeout(() => document.getElementById('new-tile-input').focus(), 100);
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+            document.getElementById('new-tile-input').value = '';
+            document.getElementById('tile-suggestions').classList.add('hidden');
+        }
+
+        function renderSettingsList() {
+            document.getElementById('settings-tile-list').innerHTML = populaireStoffen.map((stof, index) => `
+                <div class="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-xl hover:border-slate-300 transition-colors">
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">${stof}</span>
+                    <button onclick="removeTile(${index})" class="text-red-300 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center transition-all"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addTile() {
+            const input = document.getElementById('new-tile-input');
+            const val = input.value.trim().toUpperCase();
+            if (val && !populaireStoffen.includes(val)) {
+                populaireStoffen.push(val);
+                saveTiles();
+                renderSettingsList();
+                input.value = '';
+                document.getElementById('tile-suggestions').classList.add('hidden');
+            }
+        }
+
+        document.getElementById('new-tile-input').addEventListener('input', (e) => {
+            const val = e.target.value.trim().toUpperCase();
+            const suggestions = document.getElementById('tile-suggestions');
+            if (val.length < 2) { suggestions.classList.add('hidden'); return; }
+            
+            const matches = uniekeSubstanties.filter(s => s.includes(val)).slice(0, 10);
+            if (matches.length) {
+                suggestions.innerHTML = matches.map(s => `
+                    <div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer text-xs font-bold text-slate-600 transition-colors" onclick="selectTileSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>
+                `).join('');
+                suggestions.classList.remove('hidden');
+            } else {
+                suggestions.classList.add('hidden');
+            }
+        });
+
+        window.selectTileSuggestion = function(val) {
+            document.getElementById('new-tile-input').value = val;
+            addTile();
+        };
+
+        function removeTile(index) {
+            populaireStoffen.splice(index, 1);
+            saveTiles();
+            renderSettingsList();
+        }
+
+        window.onload = () => { 
+            renderPopularTiles(); 
+            
+            if (CSV_WEB_URL) {
+                document.getElementById('status-text').textContent = "Load Database";
+                document.getElementById('status-icon').className = "fa-solid fa-cloud-arrow-down text-blue-500 animate-none";
+            } else {
+                document.getElementById('status-text').textContent = "Choose CSV File";
+                document.getElementById('status-icon').className = "fa-solid fa-file-csv text-blue-500 animate-none";
+            }
+        };
+    </script>
+</body>
+</html>
