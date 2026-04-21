@@ -593,6 +593,44 @@
         let currentSterkte = 'alle';
         let currentVrijVan = [];
         let mainHulpstoffenArr = [];
+        
+        // --- REGISTRATIE FILTERS ---
+        let regFilters = { rvg: true, rvh: true, eu: true, par: true };
+        try {
+            const storedFilters = localStorage.getItem('benu_regFilters');
+            if (storedFilters) regFilters = JSON.parse(storedFilters);
+        } catch(e) {}
+
+        function getRegType(regnr) {
+            const r = String(regnr || "").toUpperCase();
+            if (r.includes('//') || r.includes('=')) return 'par';
+            if (r.includes('EU/')) return 'eu';
+            if (r.includes('RVH')) return 'rvh';
+            return 'rvg';
+        }
+
+        function getActiveDatabase() {
+            return database.filter(i => regFilters[getRegType(i.REGISTRATIENUMMER)]);
+        }
+
+        window.toggleRegFilter = function(type) {
+            regFilters[type] = !regFilters[type];
+            localStorage.setItem('benu_regFilters', JSON.stringify(regFilters));
+            applyRegFilterStyles();
+            if (searchInput.value.trim().length >= 2) executeLiveSearch();
+        };
+
+        function applyRegFilterStyles() {
+            const activeClasses = { 'rvg': ['bg-[#2b3a7b]', 'text-white', 'border-[#2b3a7b]', 'shadow-sm'], 'rvh': ['bg-[#84ad41]', 'text-white', 'border-[#84ad41]', 'shadow-sm'], 'eu': ['bg-sky-500', 'text-white', 'border-sky-500', 'shadow-sm'], 'par': ['bg-purple-500', 'text-white', 'border-purple-500', 'shadow-sm'] };
+            const inactiveClasses = ['bg-white', 'text-slate-500', 'border-slate-200', 'opacity-50', 'hover:bg-slate-50'];
+            ['rvg', 'rvh', 'eu', 'par'].forEach(type => {
+                const btn = document.getElementById('btn-filter-' + type);
+                if (!btn) return;
+                if (regFilters[type]) { btn.classList.remove(...inactiveClasses); btn.classList.add(...activeClasses[type]); } 
+                else { btn.classList.remove(...activeClasses[type]); btn.classList.add(...inactiveClasses); }
+            });
+        }
+
         const defaultPopulaireStoffen = ["PARACETAMOL", "OMEPRAZOL", "IBUPROFEN", "METOPROLOL", "PANTOPRAZOL"];
         
         let populaireStoffen = defaultPopulaireStoffen;
