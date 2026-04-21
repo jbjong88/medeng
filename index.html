@@ -949,13 +949,14 @@
             const val = searchInput.value.trim().toUpperCase();
             if (val.length < 2) { suggestionsPanel.classList.add('hidden'); return; }
             
-            const productMatches = database.filter(i => isFlexibleMatch(val, (i.PRODUCTNAAM||"").toUpperCase()) || (i.REGISTRATIENUMMER||"").includes(val)).slice(0, 15);
+            const activeDb = getActiveDatabase();
+            const productMatches = activeDb.filter(i => isFlexibleMatch(val, (i.PRODUCTNAAM||"").toUpperCase()) || (i.REGISTRATIENUMMER||"").includes(val)).slice(0, 15);
             const substanceMatches = uniekeSubstanties.filter(s => isFlexibleMatch(val, s)).slice(0, 10);
 
             if (productMatches.length || substanceMatches.length) {
                 document.getElementById('suggest-products').innerHTML = productMatches.map(m => `
                     <div class="px-5 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 transition-all group flex justify-between items-center" onclick="doSearchIndex(${database.indexOf(m)})">
-                        <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${t(m.PRODUCTNAAM)}</div><div class="text-[10px] text-slate-400 font-mono">RVG ${m.REGISTRATIENUMMER}</div></div>
+                        <div class="min-w-0 flex-1"><div class="font-bold text-slate-700 text-sm truncate group-hover:text-blue-700">${t(m.PRODUCTNAAM)}</div><div class="text-[10px] text-slate-400 font-mono">REG: ${m.REGISTRATIENUMMER}</div></div>
                         <div class="text-slate-300 group-hover:text-blue-200 text-xs">${getCats(m.FARMACEUTISCHEVORM).map(c => (metadata[c]||metadata['onbekend']).i).join('')}</div>
                     </div>`).join('') || '<div class="p-5 text-xs text-slate-400 italic">' + uiDict['no_products'][currentLang] + '</div>';
 
@@ -987,19 +988,29 @@
 
         function finalizeSearch(p) {
             if (!p) return;
+            currentOpenedProduct = p;
             searchInput.value = p.PRODUCTNAAM;
             suggestionsPanel.classList.add('hidden');
             
             document.getElementById('res-naam').innerHTML = t(p.PRODUCTNAAM);
-            document.getElementById('res-rvg').innerHTML = "RVG " + p.REGISTRATIENUMMER;
+            
+            const type = getRegType(p.REGISTRATIENUMMER);
+            let typeBadge = '';
+            if(type === 'rvg') typeBadge = `<span class="bg-[#2b3a7b] text-white px-2 py-0.5 rounded-md ml-2 inline-flex items-center gap-1 shadow-sm"><i class="fa-solid fa-pills"></i> ${uiDict['reg_rvg'][currentLang]}</span>`;
+            if(type === 'rvh') typeBadge = `<span class="bg-[#84ad41] text-white px-2 py-0.5 rounded-md ml-2 inline-flex items-center gap-1 shadow-sm"><i class="fa-solid fa-leaf"></i> ${uiDict['reg_rvh'][currentLang]}</span>`;
+            if(type === 'eu') typeBadge = `<span class="bg-sky-500 text-white px-2 py-0.5 rounded-md ml-2 inline-flex items-center gap-1 shadow-sm"><i class="fa-solid fa-earth-europe"></i> ${uiDict['reg_eu'][currentLang]}</span>`;
+            if(type === 'par') typeBadge = `<span class="bg-purple-500 text-white px-2 py-0.5 rounded-md ml-2 inline-flex items-center gap-1 shadow-sm"><i class="fa-solid fa-boxes-packing"></i> ${uiDict['reg_par'][currentLang]}</span>`;
+            
+            document.getElementById('res-rvg').innerHTML = "REG: " + p.REGISTRATIENUMMER + typeBadge;
             
             const atcCode = p.ATC && p.ATC !== "-" ? p.ATC.split(' ')[0] : null;
             document.getElementById('res-atc-badge').textContent = "ATC: " + (atcCode || "-");
             document.getElementById('res-atc-full').innerHTML = t(p.ATC) || "-";
             
+            const activeDb = getActiveDatabase();
             document.getElementById('res-atc-btn').onclick = () => {
                 if (!atcCode) return;
-                alternatievenData = database.filter(i => {
+                alternatievenData = activeDb.filter(i => {
                     const iAtc = i.ATC && i.ATC !== "-" ? i.ATC.split(' ')[0] : null;
                     return iAtc && iAtc.startsWith(atcCode);
                 });
@@ -1023,7 +1034,7 @@
             document.getElementById('link-gib').href = p.PRODUCTDETAIL_LINK || "#";
 
             const pStof = p.WERKZAMESTOFFEN && p.WERKZAMESTOFFEN !== "-" ? p.WERKZAMESTOFFEN : null;
-            alternatievenData = database.filter(i => {
+            alternatievenData = activeDb.filter(i => {
                 if (i === p) return false;
                 const iAtc = i.ATC && i.ATC !== "-" ? i.ATC.split(' ')[0] : null;
                 const matchAtc = atcCode && iAtc && iAtc.startsWith(atcCode);
@@ -1174,6 +1185,13 @@
                         a.mist.map(m => `<span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-400 text-[9px] line-through">- ${t(formatHulpstof(m))}</span>`).join('') + `</div>`;
                 }
 
+                const type = getRegType(a.REGISTRATIENUMMER);
+                let typeIcon = '';
+                if(type === 'rvg') typeIcon = `<i class="fa-solid fa-pills text-[#2b3a7b] mr-1" title="RVG"></i>`;
+                if(type === 'rvh') typeIcon = `<i class="fa-solid fa-leaf text-[#84ad41] mr-1" title="RVH"></i>`;
+                if(type === 'eu') typeIcon = `<i class="fa-solid fa-earth-europe text-sky-500 mr-1" title="EU"></i>`;
+                if(type === 'par') typeIcon = `<i class="fa-solid fa-boxes-packing text-purple-500 mr-1" title="Parallel"></i>`;
+
                 return `
                 <div class="bg-white border border-slate-200 p-4 rounded-2xl hover:border-[#84ad41] hover:shadow-md transition-all group" onclick="doSearchIndex(${a.originalIndex})">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 cursor-pointer">
@@ -1184,7 +1202,7 @@
                                 <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase truncate">${t(a.HANDELSVERGUNNINGHOUDER)}</span>
                             </div>
                         </div>
-                        <span class="text-[10px] sm:text-xs font-mono text-slate-400 sm:text-slate-300 group-hover:text-slate-500 shrink-0 sm:ml-4 self-start sm:self-auto bg-slate-50 sm:bg-transparent px-2 py-1 sm:p-0 rounded border border-slate-100 sm:border-transparent">RVG ${a.REGISTRATIENUMMER}</span>
+                        <span class="text-[10px] sm:text-xs font-mono text-slate-500 sm:text-slate-400 group-hover:text-slate-500 shrink-0 sm:ml-4 self-start sm:self-auto bg-slate-50 sm:bg-transparent px-2 py-1 sm:p-0 rounded border border-slate-100 sm:border-transparent">${typeIcon} REG: ${a.REGISTRATIENUMMER}</span>
                     </div>
                     <div class="border-t border-slate-50 mt-3 pt-2">
                         ${a.diffCount === 0 ? '<span class="text-[9px] text-[#6f8b34] font-black uppercase flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> ' + uiDict['identical'][currentLang] + '</span>' : diffHTML}
@@ -1225,14 +1243,15 @@
             hideSearchFeedback();
             suggestionsPanel.classList.add('hidden'); 
             const query = val.toUpperCase();
+            const activeDb = getActiveDatabase();
 
-            const exactProduct = database.find(i => String(i.REGISTRATIENUMMER) === query || (i.PRODUCTNAAM || "").toUpperCase() === query);
+            const exactProduct = activeDb.find(i => String(i.REGISTRATIENUMMER) === query || (i.PRODUCTNAAM || "").toUpperCase() === query);
             if (exactProduct) return finalizeSearch(exactProduct);
 
             const exactStof = uniekeSubstanties.find(s => s === query);
             if (exactStof) return window.doSearchStof(exactStof);
 
-            const productMatches = database.filter(i => isFlexibleMatch(query, (i.PRODUCTNAAM||"").toUpperCase())).slice(0, 3);
+            const productMatches = activeDb.filter(i => isFlexibleMatch(query, (i.PRODUCTNAAM||"").toUpperCase())).slice(0, 3);
             const substanceMatches = uniekeSubstanties.filter(s => isFlexibleMatch(query, s)).slice(0, 3);
 
             if (productMatches.length === 0 && substanceMatches.length === 0) {
@@ -1352,6 +1371,7 @@
         }
 
         window.onload = () => { 
+            applyRegFilterStyles();
             setLanguage(currentLang); // Laad de opgeslagen taal of standaard Nederlands
             renderPopularTiles(); 
             
